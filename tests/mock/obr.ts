@@ -1,0 +1,41 @@
+// OBR finto per provare l'interfaccia nel browser senza Owlbear (solo sviluppo: `npx vite -c tests/mock/vite.mock.config.ts`)
+const q = new URLSearchParams(location.search);
+const role = (q.get("role") ?? "PLAYER") as "GM" | "PLAYER";
+const name = q.get("name") ?? (role === "GM" ? "Master" : "Anna");
+const tok = (id: string, n: string, x: number, link?: [string, string]) => ({
+  id, name: n, type: "IMAGE", layer: "CHARACTER", visible: true, locked: false, createdUserId: "gm", zIndex: 1,
+  lastModified: "", lastModifiedUserId: "", position: { x, y: 300 }, rotation: 0, scale: { x: 1, y: 1 },
+  metadata: link ? { "it.mjf.obr-tavolo/pc": { playerId: link[0], playerName: link[1] } } : {},
+  image: { url: "" },
+});
+const k: any = tok("t1", "Kitiara", 150, ["p-anna", "Anna"]);
+k.metadata["com.owlbear-rodeo-bubbles-extension/metadata"] = { health: 12, "max health": 27, "temporary health": 5, "armor class": 16 };
+k.metadata["it.mjf.obr-tavolo/state"] = { conditions: ["poisoned", "prone"], exhaustion: 1, concentration: null, deathSaves: { ok: 0, ko: 0 } };
+let items: any[] = [k, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
+const subs: ((i: any[]) => void)[] = [];
+const noop = () => () => {};
+const ok = async () => {};
+const OBR: any = {
+  isAvailable: true, isReady: true, onReady: (cb: () => void) => cb(),
+  player: { getId: async () => (role === "GM" ? "gm" : "p-anna"), getName: async () => name, getRole: async () => role,
+    getColor: async () => "#e8c36a", onChange: noop, getSelection: async () => ["t1"] },
+  party: { getPlayers: async () => [
+    { id: "p-anna", connectionId: "c1", role: "PLAYER", name: "Anna", color: "#6fcf97", metadata: {} },
+    { id: "p-bob", connectionId: "c2", role: "PLAYER", name: "Bruno", color: "#8fd3f2", metadata: {} },
+    { id: "p-tv", connectionId: "c3", role: "PLAYER", name: "TAVOLO", color: "#aaa", metadata: {} },
+  ], onChange: noop },
+  scene: { isReady: async () => true, onReadyChange: noop,
+    items: { getItems: async (ids?: string[]) => (ids ? items.filter((i) => ids.includes(i.id)) : items),
+      onChange: (cb: any) => { subs.push(cb); return () => {}; },
+      updateItems: async (ids: string[], fn: (d: any[]) => void) => { const d = structuredClone(items.filter((i) => ids.includes(i.id))); fn(d);
+        items = items.map((i) => d.find((x) => x.id === i.id) ?? i); subs.forEach((s) => s(items)); } },
+    grid: { getDpi: async () => 150, getMeasurement: async () => q.get("meas") ?? "ALTERNATING",
+      getScale: async () => ({ raw: "5ft", parsed: { multiplier: 5, unit: "ft", digits: 0 } }), getType: async () => "SQUARE",
+      onChange: noop, setMeasurement: ok } },
+  room: { getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
+  modal: { open: async (m: any) => { location.href = m.url; }, close: ok },
+  action: { close: ok }, notification: { show: async (m: string) => console.log("NOTIFICA", m) },
+  viewport: { getScale: async () => 1, getWidth: async () => 400, getHeight: async () => 800, animateTo: ok },
+  contextMenu: { create: ok },
+};
+export default OBR;

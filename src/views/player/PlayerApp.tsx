@@ -1,0 +1,181 @@
+/**
+ * App del giocatore (modal a schermo intero sul telefono).
+ * Home con ritratto e valori principali; in basso i quattro accessi:
+ * MOVIMENTO · COMBATTIMENTO · ESPLORAZIONE · SCHEDA (ognuno si apre come popup).
+ */
+import { useMemo, useState } from "react";
+import OBR, { type Item } from "@owlbear-rodeo/sdk";
+import { isCharacter, tokensOf } from "../../shared/assignment";
+import { itemImage, useItems, useMe, useObrReady, useSceneReady } from "../../shared/hooks";
+import { IDS } from "../../shared/keys";
+import { CONDITIONS, readState, readVitals } from "../../shared/vitals";
+import { MovePanel } from "../Controller";
+import { CombatPanel } from "./CombatPanel";
+import { ExplorePanel } from "./ExplorePanel";
+import { SheetPanel } from "./SheetPanel";
+
+export type Panel = "home" | "move" | "combat" | "explore" | "sheet";
+
+export function PlayerApp() {
+  const ready = useObrReady();
+  const me = useMe(ready);
+  const sceneReady = useSceneReady(ready);
+  const characters = useItems(sceneReady, isCharacter);
+  const mine = useMemo(() => (me ? tokensOf(characters, me) : []), [characters, me]);
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [panel, setPanel] = useState<Panel>("home");
+  const [returnTo, setReturnTo] = useState<Panel>("home");
+  const item = mine.find((i) => i.id === selectedId) ?? mine[0];
+
+  const closeApp = () => OBR.modal.close(IDS.modalPlayer);
+  const openMove = (from: Panel) => {
+    setReturnTo(from);
+    setPanel("move");
+  };
+
+  if (!ready || !me) return null;
+
+  // Il movimento lascia vedere la mappa: niente home dietro.
+  if (panel === "move" && item) {
+    return <MovePanel itemId={item.id} onClose={() => setPanel(returnTo)} />;
+  }
+
+  return (
+    <div className="pl">
+      <header className="pl-top">
+        <span className="muted">OBR Tavolo · {me.name}</span>
+        <button className="icon" onClick={closeApp} aria-label="torna alla mappa">
+          ✕
+        </button>
+      </header>
+
+      {!sceneReady && <Empty text="Il master non ha ancora aperto una scena." />}
+      {sceneReady && !item && <Empty text={`Nessun personaggio assegnato a “${me.name}”. Chiedi al master.`} />}
+      {sceneReady && item && (
+        <>
+          {mine.length > 1 && (
+            <div className="chips pl-switch">
+              {mine.map((i) => (
+                <button key={i.id} className={i.id === item.id ? "on" : ""} onClick={() => setSelectedId(i.id)}>
+                  {i.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <Hero item={item} />
+        </>
+      )}
+
+      <nav className="pl-nav">
+        <NavButton icon="🧭" label="Movimento" disabled={!item} onClick={() => openMove("home")} />
+        <NavButton icon="⚔️" label="Combattimento" disabled={!item} onClick={() => setPanel("combat")} />
+        <NavButton icon="🗺️" label="Esplorazione" disabled={!item} onClick={() => setPanel("explore")} />
+        <NavButton icon="📜" label="Scheda" disabled={!item} onClick={() => setPanel("sheet")} />
+      </nav>
+
+      {item && panel === "combat" && (
+        <CombatPanel item={item} onClose={() => setPanel("home")} onMove={() => openMove("combat")} />
+      )}
+      {item && panel === "explore" && <ExplorePanel item={item} onClose={() => setPanel("home")} />}
+      {item && panel === "sheet" && <SheetPanel item={item} onClose={() => setPanel("home")} />}
+    </div>
+  );
+}
+
+function Hero({ item }: { item: Item }) {
+  const v = readVitals(item);
+  const s = readState(item);
+  const img = itemImage(item);
+  const pct = v.maxHp > 0 ? Math.max(0, Math.min(1, v.hp / v.maxHp)) : 1;
+  const tone = v.maxHp === 0 ? "" : v.hp === 0 ? "down" : pct <= 0.5 ? "bloodied" : "healthy";
+
+  return (
+    <section className="pl-hero">
+      <div className={`portrait ${tone}`}>
+        {img ? <img src={img} alt="" /> : <span>{item.name.slice(0, 1)}</span>}
+      </div>
+      <h1 className="pl-name">{item.name}</h1>
+
+      <div className="tiles">
+        <div className="tile wide">
+          <div className="tile-label">Punti ferita</div>
+          <div className="tile-value">
+            {v.maxHp ? (
+              <>
+                {v.hp}
+                <small> / {v.maxHp}</small>
+                {v.tempHp > 0 && <span className="temp">+{v.tempHp}</span>}
+              </>
+            ) : (
+              <small>da impostare</small>
+            )}
+          </div>
+          <div className="hpbar">
+            <i style={{ width: `${pct * 100}%` }} className={tone} />
+          </div>
+        </div>
+        <div className="tile">
+          <div className="tile-label">CA</div>
+          <div className="tile-value">{v.ac || "—"}</div>
+        </div>
+      </div>
+
+      <div className="cond-list">
+        {s.concentration && <span className="cond conc">🔮 {s.concentration}</span>}
+        {s.exhaustion > 0 && <span className="cond">🥱 Indebolimento {s.exhaustion}</span>}
+        {s.conditions.map((id) => {
+          const c = CONDITIONS.find((x) => x.id === id);
+          return c ? (
+            <span key={id} className="cond">
+              {c.icon} {c.label}
+            </span>
+          ) : null;
+        })}
+        {!s.concentration && s.exhaustion === 0 && s.conditions.length === 0 && (
+          <span className="muted">Nessuna condizione</span>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function NavButton(p: { icon: string; label: string; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button className="nav-btn" onClick={p.onClick} disabled={p.disabled}>
+      <span className="nav-icon">{p.icon}</span>
+      <span>{p.label}</span>
+    </button>
+  );
+}
+
+function Empty({ text }: { text: string }) {
+  return (
+    <section className="pl-hero">
+      <div className="portrait">
+        <span>?</span>
+      </div>
+      <p className="muted" style={{ textAlign: "center" }}>
+        {text}
+      </p>
+    </section>
+  );
+}
+
+/** Popup a comparsa dal basso, con titolo e X. */
+export function Popup(p: { title: string; onClose: () => void; children: React.ReactNode; extra?: React.ReactNode }) {
+  return (
+    <div className="popup-backdrop" onClick={p.onClose}>
+      <div className="popup" onClick={(e) => e.stopPropagation()}>
+        <div className="popup-head">
+          <h2 className="popup-title">{p.title}</h2>
+          {p.extra}
+          <button className="icon" onClick={p.onClose} aria-label="chiudi">
+            ✕
+          </button>
+        </div>
+        <div className="popup-body">{p.children}</div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,75 @@
+import { useState } from "react";
+import OBR from "@owlbear-rodeo/sdk";
+import { useMe, useObrReady } from "../shared/hooks";
+import { effectiveRole, loadDeviceMode, saveDeviceMode, type DeviceMode } from "../shared/device";
+import { GmHome } from "./GmHome";
+import { PlayerHome } from "./PlayerHome";
+import { TableHome } from "./TableHome";
+
+export function App() {
+  const ready = useObrReady();
+  if (!OBR.isAvailable) return <NotInObr />;
+  if (!ready) return <div className="app muted">Connessione a Owlbear Rodeo…</div>;
+  return <Main />;
+}
+
+function Main() {
+  const me = useMe(true);
+  const [mode, setMode] = useState<DeviceMode>(loadDeviceMode);
+  if (!me) return <div className="app muted">Caricamento…</div>;
+
+  const role = effectiveRole(me.role, me.name, mode);
+  const change = (m: DeviceMode) => {
+    saveDeviceMode(m);
+    setMode(m);
+  };
+
+  return (
+    <div className="app">
+      <h1>
+        <span style={{ flex: 1 }}>OBR Tavolo</span>
+        <span className={`badge ${role === "GM" ? "gm" : role === "TAVOLO" ? "tavolo" : ""}`}>
+          {role === "GM" ? "Master" : role === "TAVOLO" ? "Schermo tavolo" : "Giocatore"}
+        </span>
+      </h1>
+
+      {role === "GM" && <GmHome />}
+      {role === "PLAYER" && <PlayerHome me={me} />}
+      {role === "TAVOLO" && <TableHome />}
+
+      {me.role !== "GM" && (
+        <div className="section">
+          <h2>Questo dispositivo</h2>
+          <div className="seg">
+            {(["auto", "giocatore", "tavolo"] as DeviceMode[]).map((m) => (
+              <button key={m} className={mode === m ? "on" : ""} onClick={() => change(m)}>
+                {m === "auto" ? "Automatico" : m === "giocatore" ? "Telefono" : "Schermo TV"}
+              </button>
+            ))}
+          </div>
+          <p className="muted" style={{ marginTop: 8 }}>
+            Automatico: è lo schermo del tavolo se il nome in OBR è “TAVOLO”.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotInObr() {
+  const manifest = new URL("manifest.json", window.location.href).href;
+  return (
+    <div className="app">
+      <h1>OBR Tavolo</h1>
+      <div className="section">
+        <p>Questa è un'estensione per Owlbear Rodeo: va aperta dentro una stanza.</p>
+        <p className="muted">
+          Per installarla: Owlbear Rodeo → Profilo → Extensions → <b>Add Custom Extension</b> e incolla:
+        </p>
+        <p>
+          <code style={{ wordBreak: "break-all" }}>{manifest}</code>
+        </p>
+      </div>
+    </div>
+  );
+}
