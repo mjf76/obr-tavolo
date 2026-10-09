@@ -8,7 +8,18 @@ import { useObrReady } from "../../shared/hooks";
 import { IDS, pageUrl } from "../../shared/keys";
 import { GmHome } from "../GmHome";
 
-export async function openGmPanel(fraction = 0.5) {
+const FRACTION_KEY = "obr-tavolo-gm-fraction";
+/** Ultima altezza scelta per il pannello (⅖ ½ ¾), ricordata su questo dispositivo. */
+export function loadGmFraction(): number {
+  try {
+    const f = parseFloat(localStorage.getItem(FRACTION_KEY) ?? "");
+    return [0.4, 0.5, 0.75].includes(f) ? f : 0.5;
+  } catch {
+    return 0.5;
+  }
+}
+
+export async function openGmPanel(fraction = loadGmFraction()) {
   const [w, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
   await OBR.popover.open({
     id: IDS.popoverGm,
@@ -34,6 +45,11 @@ export function GmPanel() {
     const h = await OBR.viewport.getHeight();
     await OBR.popover.setHeight(IDS.popoverGm, Math.round(h * f));
     setFraction(f);
+    try {
+      localStorage.setItem(FRACTION_KEY, String(f));
+    } catch {
+      /* ignorato */
+    }
   };
 
   return (

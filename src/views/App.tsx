@@ -3,7 +3,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { useMe, useObrReady } from "../shared/hooks";
 import { effectiveRole, loadDeviceMode, saveDeviceMode, type DeviceMode } from "../shared/device";
 import { GmHome } from "./GmHome";
-import { openGmPanel } from "./gm/GmPanel";
+import { loadGmFraction, openGmPanel } from "./gm/GmPanel";
 import { PlayerHome } from "./PlayerHome";
 import { TableHome } from "./TableHome";
 
@@ -99,19 +99,14 @@ function Connecting() {
   );
 }
 
-/** Su schermi stretti (telefono/tablet) il pannello del master si apre in basso, a metà schermo. */
+/**
+ * Su schermi stretti (telefono, tablet in verticale) il pannello del master si apre SEMPRE
+ * in basso, a tutta larghezza, con la mappa sopra: il piccolo riquadro dell'estensione non serve.
+ */
 function GmLauncher() {
   useEffect(() => {
-    let auto = true;
-    try {
-      auto = sessionStorage.getItem("obr-tavolo-gm-auto") !== "no";
-      sessionStorage.setItem("obr-tavolo-gm-auto", "no");
-    } catch {
-      /* ignorato */
-    }
-    if (!auto) return;
     OBR.viewport.getWidth().then((w) => {
-      if (w < 1000) void openGmPanel(0.5);
+      if (w < 1000) void openGmPanel(loadGmFraction());
     });
   }, []);
   return null;
