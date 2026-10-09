@@ -99,6 +99,14 @@ Non bisogna aprire niente sul TV: la nebbia la disegna Owlbear su ogni dispositi
 
 ---
 
+## Impostazioni (master → Prep. → ⚙️ Impostazioni)
+
+Qui c'è solo ciò che cambia il comportamento predefinito, e vale per tutte le scene della stanza.
+- **Diagonali nel movimento**: la regola predefinita è 5-10-5. La pulsantiera del master la applica da sola a ogni scena che apri. Le alternative sono diagonale = 1 casella, distanza euclidea e diagonale = 2 caselle.
+- **Diagnostica scena**: dimensione della casella, oggetti della nebbia, numero di porte e raggio di visione di ogni PG. Serve quando nebbia o porte non si comportano come previsto.
+
+---
+
 ## Installazione in Owlbear Rodeo
 
 1. Pubblica il sito (vedi *Pubblicazione*), poi in Owlbear Rodeo: **Profilo → Extensions → Add Custom Extension**

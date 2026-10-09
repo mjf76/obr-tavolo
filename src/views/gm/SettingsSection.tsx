@@ -36,7 +36,7 @@ function Diagnostics({ characters, dpi }: { characters: Item[]; dpi: number }) {
   useEffect(() => {
     const load = (all: Item[]) => setFog(all.filter((i) => i.layer === "FOG"));
     OBR.scene.items.getItems().then(load);
-    OBR.scene.grid.getScale().then((g) => setScale(`${g.parsed.multiplier} ${g.parsed.unit}`));
+    OBR.scene.grid.getScale().then((g) => setScale(g.raw));
     return OBR.scene.items.onChange(load);
   }, []);
   const keys = [...new Set(fog.flatMap((i) => Object.keys(i.metadata)))];
