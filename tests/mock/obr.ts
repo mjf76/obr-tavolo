@@ -27,7 +27,7 @@ const ok = async () => {};
 const OBR: any = {
   isAvailable: true, isReady: true, onReady: (cb: () => void) => cb(),
   player: { getId: async () => (role === "GM" ? "gm" : "p-anna"), getName: async () => name, getRole: async () => role,
-    getColor: async () => "#e8c36a", onChange: noop, getSelection: async () => [q.get("sel") ?? "t1"] },
+    getColor: async () => "#e8c36a", onChange: noop, deselect: ok, getSelection: async () => [q.get("sel") ?? "t1"] },
   party: { getPlayers: async () => [
     { id: "p-anna", connectionId: "c1", role: "PLAYER", name: "Anna", color: "#6fcf97", metadata: {} },
     { id: "p-bob", connectionId: "c2", role: "PLAYER", name: "Bruno", color: "#8fd3f2", metadata: {} },
@@ -46,7 +46,7 @@ const OBR: any = {
   room: { getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
   broadcast: { sendMessage: ok, onMessage: noop },
   modal: { open: async (m: any) => { location.href = m.url; }, close: ok },
-  action: { close: ok }, notification: { show: async (m: string) => console.log("NOTIFICA", m) },
+  action: { close: ok }, popover: { open: ok, close: ok, setHeight: ok }, notification: { show: async (m: string) => console.log("NOTIFICA", m) },
   viewport: { getScale: async () => 1, getWidth: async () => 400, getHeight: async () => 800, animateTo: ok },
   contextMenu: { create: ok },
 };

@@ -13,6 +13,7 @@ import {
   type CombatState,
 } from "../../shared/combat";
 import { fmtMod, d20 } from "../../sheet/dice";
+import { setFocus } from "../../shared/focus";
 
 const setVisible = (ids: string[], visible: boolean) =>
   OBR.scene.items.updateItems(ids, (items) => {
@@ -81,7 +82,7 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
           return (
             <div className="row" key={m.id}>
               {itemImage(m) ? <img className="thumb" src={itemImage(m)} alt="" style={{ opacity: m.visible ? 1 : 0.4 }} /> : <span className="thumb" />}
-              <div className="grow" onClick={() => OBR.player.select([m.id])} style={{ cursor: "pointer" }}>
+              <div className="grow" onClick={() => setFocus([m.id])} style={{ cursor: "pointer" }}>
                 <div className="name">{m.name}</div>
                 <div className="muted small">
                   {sh?.tipo === "mostro" ? sh.nome : "nessuna scheda"}
@@ -124,7 +125,7 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
                 return (
                   <div className={`init-row ${e.kind}`} key={e.id}>
                     <span className="init-rank">{e.init === null ? "–" : i + 1}</span>
-                    <div className="grow" onClick={() => it && OBR.player.select([e.id])} style={{ cursor: "pointer" }}>
+                    <div className="grow" onClick={() => it && setFocus([e.id])} style={{ cursor: "pointer" }}>
                       <div className="name">
                         {e.kind === "mostro" ? "👹 " : "🧙 "}
                         {e.name}

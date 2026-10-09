@@ -279,3 +279,9 @@ button.pm { width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size
 .init-input { width: 56px; text-align: center; font-size: 18px; font-weight: 800; padding: 6px; }
 .init-banner { display: flex; align-items: center; gap: 10px; background: #3a1d1f; border: 1px solid var(--err); border-radius: 14px; padding: 10px 12px; width: 100%; max-width: 420px; }
 .init-banner.done { background: var(--panel); border-color: var(--line); }
+
+/* ---------- Pannello master in basso ---------- */
+body.page-gm { background: var(--bg); }
+.gm-panel { padding-top: 0; }
+.gm-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 6px; padding: 8px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+.gm-panel .seg { position: sticky; top: 46px; z-index: 4; background: var(--bg); padding-bottom: 4px; }

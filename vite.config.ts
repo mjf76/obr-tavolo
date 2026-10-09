@@ -14,7 +14,7 @@ const PROD_BASE = new URL(PROD_SITE + "/").pathname; // es. "/obr-tavolo/"
 function manifest(site: string) {
   return {
     name: "OBR Tavolo",
-    version: "0.4.0",
+    version: "0.4.1",
     manifest_version: 1,
     description: "Controller da telefono per giocare in presenza: PG, movimento, schede D&D 5.5",
     author: "Michael Fargion",
@@ -61,6 +61,7 @@ export default defineConfig(({ command }) => ({
         index: resolve(__dirname, "index.html"),
         controller: resolve(__dirname, "controller.html"),
         player: resolve(__dirname, "player.html"),
+        gm: resolve(__dirname, "gm.html"),
         assign: resolve(__dirname, "assign.html"),
         background: resolve(__dirname, "background.html"),
       },

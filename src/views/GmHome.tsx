@@ -19,16 +19,7 @@ import { SelectedCard } from "./gm/StatBlock";
 import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
-
-/** Token selezionati dal master (aggiornati in tempo reale). */
-function useSelection(sceneReady: boolean, all: Item[]): Item[] {
-  const [ids, setIds] = useState<string[]>([]);
-  useEffect(() => {
-    OBR.player.getSelection().then((s) => setIds(s ?? []));
-    return OBR.player.onChange((p) => setIds(p.selection ?? []));
-  }, []);
-  return sceneReady ? all.filter((i) => ids.includes(i.id)) : [];
-}
+import { loadProtectHidden, saveProtectHidden, setFocus, useFocus } from "../shared/focus";
 
 export function GmHome() {
   const sceneReady = useSceneReady(true);
@@ -48,7 +39,7 @@ export function GmHome() {
   useEffect(() => {
     loadLibrary().then(setLib);
   }, []);
-  const selection = useSelection(sceneReady, characters);
+  const selection = useFocus(sceneReady, characters);
   const [publicRolls, setPublicRolls] = useState(false);
 
   return (
@@ -74,7 +65,7 @@ export function GmHome() {
               mostri visibili anche sul TV
             </label>
           )}
-          {selection.length !== 1 && <p className="muted">Seleziona un token per vederne scheda e PF.</p>}
+          {selection.length !== 1 && <p className="muted">Tocca un token (sulla mappa o nell'elenco) per vederne scheda e PF.</p>}
           {table && (
             <button className="small" onClick={() => askTvFit()}>
               📺 Reinquadra la mappa sul TV
@@ -89,6 +80,7 @@ export function GmHome() {
       {tab === "prep" && (
       <>
       <SheetsSection lib={lib} setLib={setLib} characters={characters} selection={selection} />
+      <ProtectToggle />
       {/* ---- Scena e griglia ---- */}
       <div className="section">
         <h2>Scena</h2>
@@ -184,7 +176,7 @@ function CombatList({ characters }: { characters: Item[] }) {
         const sh = readSheet(c);
         const pct = v.maxHp ? v.hp / v.maxHp : 1;
         return (
-          <div className="row" key={c.id} onClick={() => OBR.player.select([c.id])} style={{ cursor: "pointer" }}>
+          <div className="row" key={c.id} onClick={() => setFocus([c.id])} style={{ cursor: "pointer" }}>
             {itemImage(c) ? <img className="thumb" src={itemImage(c)} alt="" /> : <span className="thumb" />}
             <div className="grow">
               <div className="name">
@@ -262,6 +254,30 @@ function CharacterRow({ item, players, ownerOnly, lib }: { item: Item; players: 
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function ProtectToggle() {
+  const [on, setOn] = useState(loadProtectHidden);
+  return (
+    <div className="section">
+      <h2>Token nascosti</h2>
+      <label className="toggle">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(e) => {
+            saveProtectHidden(e.target.checked);
+            setOn(e.target.checked);
+          }}
+        />
+        Quando selezioni un token nascosto, annulla subito la selezione
+      </label>
+      <p className="muted small">
+        I giocatori vedono le selezioni del master (etichetta “GM”) anche sui token nascosti. Con questa opzione il token
+        resta in primo piano nel pannello; per spostarlo usa 🧭 Muovi.
+      </p>
     </div>
   );
 }

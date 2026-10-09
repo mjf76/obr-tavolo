@@ -10,6 +10,7 @@ export const IDS = {
   contextAssign: `${NS}/assign`,
   modalController: `${NS}/controller`,
   modalPlayer: `${NS}/player`,
+  popoverGm: `${NS}/gm-panel`,
 } as const;
 
 /** Nome convenzionale del client collegato al TV. */
