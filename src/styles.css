@@ -285,3 +285,6 @@ body.page-gm { background: var(--bg); }
 .gm-panel { padding-top: 0; }
 .gm-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 6px; padding: 8px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
 .gm-panel .seg { position: sticky; top: 46px; z-index: 4; background: var(--bg); padding-bottom: 4px; }
+.focused > .row, .init-row.focused { outline: 2px solid var(--gold); border-radius: 10px; }
+.inline-card { margin: 6px 0 10px; }
+.inline-card .section { background: var(--panel-2); padding: 10px; }

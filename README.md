@@ -71,6 +71,8 @@ Formato dei file e campi: **docs/FORMATO-SCHEDE.md**. Esempi: `examples/`. Conve
     - Ogni valore si può correggere o scrivere a mano.
   - **Aggiorna partecipanti** aggiunge i token nuovi e toglie quelli rimossi; **Termina combattimento** chiude l'elenco.
   - L'avanzamento dei turni resta al tavolo.
+  - **Tocca un partecipante** (nei mostri o nell'elenco iniziativa): sotto la riga si apre la sua scheda con PF ±, Muovi, Nascondi/Rivela e tiri. Sulla mappa del master compare un cerchio dorato tratteggiato attorno all'esemplare; solo il master lo vede. **📍 Mostrami dov'è** centra la mappa su quell'esemplare.
+  - **🔢 Numera doppioni**: rinomina i mostri dello stesso tipo in "Goblin 1, 2, 3…", dall'alto in basso e da sinistra a destra. Le schede restano collegate. I numeri compaiono anche nell'etichetta del token visibile ai giocatori.
 - **Master → Partita, token selezionato**:
   - **🧭 Muovi** apre la pulsantiera anche per i mostri;
   - **Nascondi/Rivela**;

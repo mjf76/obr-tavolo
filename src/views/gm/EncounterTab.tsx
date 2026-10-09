@@ -13,14 +13,69 @@ import {
   type CombatState,
 } from "../../shared/combat";
 import { fmtMod, d20 } from "../../sheet/dice";
-import { setFocus } from "../../shared/focus";
+import { centerViewOn, setFocus } from "../../shared/focus";
+import { SelectedCard } from "./StatBlock";
+import { matchKey } from "../../sheet/library";
 
 const setVisible = (ids: string[], visible: boolean) =>
   OBR.scene.items.updateItems(ids, (items) => {
     for (const i of items) i.visible = visible;
   });
 
-export function EncounterTab({ characters, combat }: { characters: Item[]; combat: CombatState }) {
+const baseName = (n: string) => n.replace(/\s*#?\d+\s*$/, "").trim();
+const hasDuplicates = (ms: Item[]) => {
+  const seen = new Set<string>();
+  return ms.some((m) => {
+    const k = matchKey(m.name);
+    if (seen.has(k)) return true;
+    seen.add(k);
+    return false;
+  });
+};
+
+/** Mostri con lo stesso nome → "Goblin guerriero 1", "2", "3"… (da sinistra a destra, dall'alto in basso). */
+async function numberDuplicates(ms: Item[]) {
+  const groups = new Map<string, Item[]>();
+  for (const m of ms) {
+    const k = matchKey(m.name);
+    groups.set(k, [...(groups.get(k) ?? []), m]);
+  }
+  const names = new Map<string, string>();
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    const base = baseName(g[0].name);
+    [...g]
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+      .forEach((m, i) => names.set(m.id, `${base} ${i + 1}`));
+  }
+  if (!names.size) return;
+  await OBR.scene.items.updateItems([...names.keys()], (items) => {
+    for (const i of items) i.name = names.get(i.id) ?? i.name;
+  });
+}
+
+export function EncounterTab({ characters, combat, focus }: { characters: Item[]; combat: CombatState; focus: Item[] }) {
+  const focusId = focus.length === 1 ? focus[0].id : null;
+  const [publicRolls, setPublicRolls] = useState(false);
+  /** Tocca un partecipante: si apre la sua scheda sotto la riga (tocca di nuovo per chiudere). */
+  const toggle = (id: string) => setFocus(focusId === id ? [] : [id]);
+  const detail = (id: string) => {
+    const it = characters.find((c) => c.id === id);
+    if (focusId !== id || !it) return null;
+    return (
+      <div className="inline-card">
+        <SelectedCard item={it} publicRolls={publicRolls} />
+        <div className="row-btns">
+          <button className="small" onClick={() => centerViewOn(id)}>📍 Mostrami dov'è</button>
+          {readSheet(it)?.tipo === "mostro" && (
+            <label className="muted toggle small">
+              <input type="checkbox" checked={publicRolls} onChange={(e) => setPublicRolls(e.target.checked)} /> tiri visibili sul TV
+            </label>
+          )}
+        </div>
+      </div>
+    );
+  };
   const monsters = characters.filter((c) => !isPcToken(c));
   const pcs = characters.filter(isPcToken);
   const hidden = monsters.filter((m) => !m.visible);
@@ -74,15 +129,19 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
             <button onClick={() => setVisible(monsters.map((m) => m.id), false)} disabled={hidden.length === monsters.length}>
               🙈 Nascondi tutti
             </button>
+            <button onClick={() => numberDuplicates(monsters)} disabled={!hasDuplicates(monsters)}>
+              🔢 Numera doppioni
+            </button>
           </div>
         )}
         {monsters.map((m) => {
           const v = readVitals(m);
           const sh = readSheet(m);
           return (
-            <div className="row" key={m.id}>
+            <div key={m.id} className={focusId === m.id ? "focused" : ""}>
+            <div className="row">
               {itemImage(m) ? <img className="thumb" src={itemImage(m)} alt="" style={{ opacity: m.visible ? 1 : 0.4 }} /> : <span className="thumb" />}
-              <div className="grow" onClick={() => setFocus([m.id])} style={{ cursor: "pointer" }}>
+              <div className="grow" onClick={() => toggle(m.id)} style={{ cursor: "pointer" }}>
                 <div className="name">{m.name}</div>
                 <div className="muted small">
                   {sh?.tipo === "mostro" ? sh.nome : "nessuna scheda"}
@@ -92,6 +151,8 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
               <button className={`small ${m.visible ? "" : "primary"}`} onClick={() => setVisible([m.id], !m.visible)}>
                 {m.visible ? "👁 visibile" : "🙈 nascosto"}
               </button>
+            </div>
+            {!(combat.active && combat.entries.some((e) => e.id === m.id)) && detail(m.id)}
             </div>
           );
         })}
@@ -123,12 +184,13 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
               {sorted.map((e, i) => {
                 const it = byId.get(e.id);
                 return (
-                  <div className={`init-row ${e.kind}`} key={e.id}>
+                  <div key={e.id}>
+                  <div className={`init-row ${e.kind} ${focusId === e.id ? "focused" : ""}`}>
                     <span className="init-rank">{e.init === null ? "–" : i + 1}</span>
-                    <div className="grow" onClick={() => it && setFocus([e.id])} style={{ cursor: "pointer" }}>
+                    <div className="grow" onClick={() => it && toggle(e.id)} style={{ cursor: "pointer" }}>
                       <div className="name">
                         {e.kind === "mostro" ? "👹 " : "🧙 "}
-                        {e.name}
+                        {e.kind === "mostro" && it ? it.name : e.name}
                         {it && !it.visible && <span className="tag">nascosto</span>}
                         {!it && <span className="tag">rimosso</span>}
                       </div>
@@ -144,6 +206,8 @@ export function EncounterTab({ characters, combat }: { characters: Item[]; comba
                       placeholder="—"
                       onChange={(ev) => setInit(e.id, ev.target.value.replace(/[^\d-]/g, ""))}
                     />
+                  </div>
+                  {detail(e.id)}
                   </div>
                 );
               })}

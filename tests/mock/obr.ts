@@ -16,7 +16,8 @@ import ilsa from "../../examples/pg-esempio-mago.json";
 if (q.get("sheet") !== "no") k.metadata["it.mjf.obr-tavolo/sheet"] = q.get("pg") === "mago" ? ilsa : bran;
 const gob: any = tok("t4", "Goblin guerriero 2", 600); gob.visible = false;
 gob.metadata["it.mjf.obr-tavolo/sheet"] = { tipo: "mostro", versione: 1, id: "goblin-warrior", nome: "Goblin guerriero", ca: 15, pf: 10, velocita: "9 m", caratteristiche: { for: 8, des: 15, cos: 10, int: 10, sag: 8, car: 8 }, sezioni: [] };
-let items: any[] = [k, gob, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
+const gob2: any = structuredClone(gob); gob2.id = "t5"; gob2.name = "Goblin guerriero"; gob2.position = { x: 750, y: 300 };
+let items: any[] = [k, gob, gob2, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
 const subs: ((i: any[]) => void)[] = [];
 const msubs: ((m: any) => void)[] = [];
 let meta: any = q.get("combat") ? { "it.mjf.obr-tavolo/combat": { active: true, entries: [
@@ -36,13 +37,14 @@ const OBR: any = {
   scene: { isReady: async () => true, onReadyChange: noop,
     getMetadata: async () => meta, setMetadata: async (u: any) => { meta = { ...meta, ...u }; msubs.forEach((f) => f(meta)); },
     onMetadataChange: (cb: any) => { msubs.push(cb); return () => {}; },
-    items: { getItems: async (ids?: string[]) => (ids ? items.filter((i) => ids.includes(i.id)) : items),
+    items: { getItems: async (ids?: any) => (Array.isArray(ids) ? items.filter((i) => ids.includes(i.id)) : items), getItemBounds: async () => ({ center: { x: 0, y: 0 }, width: 150, height: 150, min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }),
       onChange: (cb: any) => { subs.push(cb); return () => {}; },
       updateItems: async (ids: string[], fn: (d: any[]) => void) => { const d = structuredClone(items.filter((i) => ids.includes(i.id))); fn(d);
         items = items.map((i) => d.find((x) => x.id === i.id) ?? i); subs.forEach((s) => s(items)); } },
     grid: { getDpi: async () => 150, getMeasurement: async () => q.get("meas") ?? "ALTERNATING",
       getScale: async () => ({ raw: "5ft", parsed: { multiplier: 5, unit: "ft", digits: 0 } }), getType: async () => "SQUARE",
-      onChange: noop, setMeasurement: ok } },
+      onChange: noop, setMeasurement: ok },
+    local: { addItems: ok, deleteItems: ok } },
   room: { getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
   broadcast: { sendMessage: ok, onMessage: noop },
   modal: { open: async (m: any) => { location.href = m.url; }, close: ok },
@@ -51,3 +53,8 @@ const OBR: any = {
   contextMenu: { create: ok },
 };
 export default OBR;
+/** Builder finto: ogni metodo restituisce sé stesso, build() un oggetto vuoto. */
+export const buildShape = () => {
+  const b: any = new Proxy({}, { get: (_t, k) => (k === "build" ? () => ({}) : () => b) });
+  return b;
+};

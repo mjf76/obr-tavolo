@@ -19,7 +19,7 @@ import { SelectedCard } from "./gm/StatBlock";
 import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
-import { loadProtectHidden, saveProtectHidden, setFocus, useFocus } from "../shared/focus";
+import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
 export function GmHome() {
   const sceneReady = useSceneReady(true);
@@ -40,6 +40,7 @@ export function GmHome() {
     loadLibrary().then(setLib);
   }, []);
   const selection = useFocus(sceneReady, characters);
+  useFocusHighlight(selection);
   const [publicRolls, setPublicRolls] = useState(false);
 
   return (
@@ -75,7 +76,7 @@ export function GmHome() {
         </>
       )}
 
-      {tab === "incontro" && <EncounterTab characters={characters} combat={combat} />}
+      {tab === "incontro" && <EncounterTab characters={characters} combat={combat} focus={selection} />}
 
       {tab === "prep" && (
       <>
