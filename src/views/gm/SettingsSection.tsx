@@ -6,6 +6,7 @@ import { setSettings, useRoomSettings } from "../../shared/settings";
 import { FOG_LIGHT_KEY } from "../../shared/vision";
 import { DOORS_KEY } from "../../shared/doors";
 import { isPcToken } from "../../shared/combat";
+import { doorNumbersOn, setDoorNumbers } from "../../shared/doors";
 
 export function SettingsSection({ characters, dpi }: { characters: Item[]; dpi: number }) {
   const s = useRoomSettings();
@@ -24,6 +25,7 @@ export function SettingsSection({ characters, dpi }: { characters: Item[]; dpi: 
           </option>
         ))}
       </select>
+      <DoorNumbersToggle />
       <Diagnostics characters={characters} dpi={dpi} />
     </details>
   );
@@ -63,5 +65,23 @@ function Diagnostics({ characters, dpi }: { characters: Item[]; dpi: number }) {
         })}
       </div>
     </details>
+  );
+}
+
+/** I numeri delle porte sulla mappa del master sono attivi di default. */
+function DoorNumbersToggle() {
+  const [on, setOn] = useState(doorNumbersOn);
+  return (
+    <label className="toggle small" style={{ display: "block", marginTop: 10 }}>
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={(e) => {
+          setOn(e.target.checked);
+          setDoorNumbers(e.target.checked);
+        }}
+      />{" "}
+      Numeri delle porte sulla mappa (solo su questo dispositivo)
+    </label>
   );
 }

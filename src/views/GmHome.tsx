@@ -72,7 +72,6 @@ export function GmHome() {
               mostri visibili a TV e giocatori
             </label>
           )}
-          {selection.length !== 1 && <p className="muted">Tocca un token (sulla mappa o nell'elenco) per vederne scheda e PF.</p>}
           <div className="row-btns">
             {table && (
               <button className="small" onClick={() => askTvFit()}>

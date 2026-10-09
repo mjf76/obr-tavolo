@@ -94,7 +94,7 @@ Non bisogna aprire niente sul TV: la nebbia la disegna Owlbear su ogni dispositi
 - **Mostri**: non devono avere luci *primarie*, altrimenti i giocatori vedono ciò che vede il mostro. Se ne trova, la sezione lo segnala e offre **Rendile secondarie**.
 - Il TV e i telefoni vedono l'unione di ciò che vedono tutti i PG.
 - **Muri e porte nel movimento**: la pulsantiera non fa attraversare muri e porte chiuse, nemmeno tagliando un angolo in diagonale. Il token resta fermo e il telefono vibra. Se un token è fuori asse, al passo successivo torna da solo al centro della casella.
-- **Porte (master → Partita)**: ogni porta ha un numero. Lo stesso numero compare sulla mappa sopra la porta, solo sul dispositivo del master: verde se aperta, rosso se chiusa. Nel pannello c'è una griglia di caselle, una per porta, con **Apri/Chiudi**. Toccando il numero la mappa si centra sulla porta. Puoi nascondere i numeri sulla mappa e c'è anche **Chiudi tutte**. La numerazione va dall'alto in basso e da sinistra a destra, quindi resta la stessa a ogni sessione.
+- **Porte (master → Partita)**: ogni porta ha un numero, che compare anche sulla mappa del master sopra la porta (giocatori e TV non lo vedono): verde se è aperta, rosso se è chiusa. Nel pannello c'è un pulsante per ogni numero: toccalo per aprire o chiudere quella porta. C'è anche **Chiudi tutte**. I numeri sulla mappa sono attivi di default e si spengono in ⚙️ Impostazioni.
 - **Master**: con **📐 Allinea** (scheda del token selezionato) o **📐 Riallinea tutti i token** (scheda Partita) rimetti i token al centro delle caselle. I token Grandi e Mastodontici vanno sugli incroci delle linee.
 
 ---

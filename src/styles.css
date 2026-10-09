@@ -290,11 +290,7 @@ body.page-gm { background: var(--bg); }
 .inline-card .section { background: var(--panel-2); padding: 10px; }
 
 /* porte numerate */
-.door-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
-.door-cell { display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 10px; border: 1px solid var(--line, #3a3a48); }
-.door-cell.open { background: rgba(46, 125, 50, 0.18); border-color: #2e7d32; }
-.door-cell.closed { background: rgba(198, 40, 40, 0.15); border-color: #c62828; }
-.door-num { min-width: 34px; font-weight: 800; font-size: 16px; padding: 4px 6px; }
-.door-cell.open .door-num { background: #2e7d32; color: #fff; border-color: #2e7d32; }
-.door-cell.closed .door-num { background: #c62828; color: #fff; border-color: #c62828; }
-.door-cell .small { flex: 1; }
+.door-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.door-num { min-width: 42px; height: 38px; font-weight: 800; font-size: 16px; padding: 0 8px; color: #fff; }
+.door-num.open { background: #2e7d32; border-color: #2e7d32; }
+.door-num.closed { background: #c62828; border-color: #c62828; }
