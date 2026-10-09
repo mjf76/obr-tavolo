@@ -20,7 +20,10 @@ export function loadGmFraction(): number {
 }
 
 export async function openGmPanel(fraction = loadGmFraction()) {
-  const [w, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
+  const [vw, h] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
+  // su telefono la larghezza del viewport di Owlbear risulta più stretta dello schermo di qualche pixel:
+  // usiamo quella dello schermo, così il pannello arriva fino al bordo destro
+  const w = vw < 1000 ? Math.max(vw, window.screen?.width ?? 0) : vw;
   await OBR.popover.open({
     id: IDS.popoverGm,
     url: pageUrl("gm.html", { f: String(fraction) }),
