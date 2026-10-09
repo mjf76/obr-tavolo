@@ -37,23 +37,22 @@ export function SheetsSection({
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  /** PG: token assegnati a un giocatore con nome uguale alla scheda. Mostri: token non assegnati, per nome. */
+  /** Ogni token: prima cerca una scheda PG (nome token = PG, token o giocatore), poi un mostro. */
   const autoMatch = async () => {
     const msgs: string[] = [];
     for (const t of characters) {
       const current = readSheet(t);
-      if (getLink(t)) {
-        const pg = findPg(lib, t.name);
-        if (pg) {
-          await applyPg(t.id, pg);
-          msgs.push(`📜 ${t.name} ← ${pg.nome}`);
-        }
-      } else {
-        const m = findMonster(lib, t.name);
-        if (m && !(current?.tipo === "mostro" && current.id === m.id)) {
-          await bindMonster([t.id], m);
-          msgs.push(`👹 ${t.name} ← ${m.nome}`);
-        }
+      const pg = findPg(lib, t.name);
+      if (pg) {
+        await applyPg(t.id, pg);
+        msgs.push(`📜 ${t.name} ← ${pg.nome}`);
+        continue;
+      }
+      if (getLink(t)) continue; // token di un giocatore senza scheda corrispondente: non diventa un mostro
+      const m = findMonster(lib, t.name);
+      if (m && !(current?.tipo === "mostro" && current.id === m.id)) {
+        await bindMonster([t.id], m);
+        msgs.push(`👹 ${t.name} ← ${m.nome}`);
       }
     }
     setReport(msgs.length ? msgs : ["Nessun nuovo abbinamento: controlla che i nomi dei token corrispondano alle schede."]);
