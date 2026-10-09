@@ -2,7 +2,7 @@
 
 Estensione per **Owlbear Rodeo** che porta il gioco in presenza sul telefono: ogni giocatore muove il proprio personaggio (e in seguito gestisce la scheda D&D 5.5) dal telefono, la mappa sta sul TV, il master lavora dal tablet.
 
-Stato: **v0.2.0** — Step 0 e 1 (fondamenta, assegnazione PG) + app del giocatore con home e quattro sezioni.
+Stato: **v0.3.0**: assegnazione dei PG, app del giocatore, **schede 5.5 da JSON**, bestiario del master e tiri condivisi.
 
 ---
 
@@ -26,6 +26,38 @@ PF e CA sono scritti sul token con le chiavi di *Stat Bubbles for D&D*: se l'est
 **Pulsantiera di movimento**: croce direzionale a 8 direzioni, contatore del movimento in piedi e metri con la regola **5-10-5** (letta dalla griglia della scena), suggerimento sul costo della prossima diagonale, annulla ultimo passo, azzera, vista che segue il token. Da PC funzionano anche le frecce, il tastierino numerico e Q/E/Z/C per le diagonali.
 
 **Assegnazione**: dal pannello del master oppure dal menu del token ("Assegna a giocatore", visibile solo al master). Il legame è salvato nel token con id e nome del giocatore: se un giocatore rientra con un id diverso ma lo stesso nome, viene ricollegato in automatico.
+
+---
+
+## Schede e mostri (v0.3)
+
+### Preparazione, prima della sessione (sul tablet del master)
+1. **Preparazione → 📂 Importa JSON** e seleziona i file:
+   - le schede dei PG;
+   - il bestiario `dati/bestiario-mm2024-ita.json` (590 mostri del Manuale dei Mostri 2024 in italiano, con il testo inglese dove manca la traduzione).
+
+   L'archivio resta sul tablet (IndexedDB): basta importarlo una volta.
+2. Dai ai token in Owlbear lo stesso nome della scheda o del mostro (es. `Goblin guerriero`, `Goblin guerriero 2`, oppure il nome inglese).
+3. **🔗 Abbina per nome**:
+   - i token assegnati a un giocatore ricevono la scheda PG;
+   - gli altri ricevono il mostro, con PF pieni, CA e statistiche nascoste ai giocatori.
+
+   In alternativa: seleziona uno o più token, cerca il mostro e premi **Collega**.
+
+### In sessione
+- **Master, scheda Partita**: tocca un token per vederne il blocco statistiche. I tiri per colpire e i danni sono pulsanti; c'è il riquadro Danno/Cura e l'elenco di tutti i PF in scena. I tiri dei mostri sono segreti, salvo l'opzione "visibili anche sul TV".
+- **Giocatore**:
+  - **Scheda**: caratteristiche, tiri salvezza, abilità, attacchi, incantesimi, inventario, privilegi; si tira con un tocco, scegliendo prima Vantaggio o Svantaggio.
+  - **Combattimento → Azioni**: attacchi, incantesimi preparati con consumo degli slot, risorse.
+  - **Esplorazione**: riposo breve con Dadi Vita, riposo lungo completo, prove e incantesimi rituali.
+- **Tiri**: il risultato compare grande sul telefono di chi tira e come notifica sul tablet del master e sullo schermo TAVOLO.
+
+### Movimento
+- La vista resta sempre centrata sul token, con lo zoom regolato sulla velocità del PG (30 ft = 6 caselle per lato).
+- Il contatore diventa rosso oltre la velocità.
+- Il pulsante centrale **Azzera** riporta il contatore a zero.
+
+Formato dei file e campi: **docs/FORMATO-SCHEDE.md**. Esempi: `examples/`. Conversione da CSV: `tools/bestiario-da-csv.py`.
 
 ---
 

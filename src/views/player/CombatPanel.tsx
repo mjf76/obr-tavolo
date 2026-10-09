@@ -5,13 +5,15 @@ import {
   applyHeal,
   applyTempHp,
   CONDITIONS,
+  mutate,
   readState,
   readVitals,
-  writeState,
   writeVitals,
   type CharState,
   type Vitals,
 } from "../../shared/vitals";
+import { readPg } from "../../sheet/store";
+import { AttackList, ModeBar, ResourceList, SpellSection } from "../sheet/parts";
 import { Popup } from "./PlayerApp";
 
 type Tab = "stato" | "azioni";
@@ -36,7 +38,7 @@ export function CombatPanel({ item, onClose, onMove }: { item: Item; onClose: ()
           Azioni
         </button>
       </div>
-      {tab === "stato" ? <StatusTab item={item} /> : <ActionsTab />}
+      {tab === "stato" ? <StatusTab item={item} /> : <ActionsTab item={item} />}
     </Popup>
   );
 }
@@ -56,15 +58,16 @@ function StatusTab({ item }: { item: Item }) {
   const n = parseInt(amount, 10);
   const valid = Number.isFinite(n) && n > 0;
 
-  const setV = (next: Vitals) => safe(() => writeVitals(item.id, next));
-  const setS = (next: CharState) => safe(() => writeState(item.id, next));
+  /** Le modifiche partono sempre dai valori attuali del token. */
+  const patchS = (fn: (cur: CharState) => CharState) => safe(() => mutate(item.id, (_v, cur) => ({ s: fn(cur) })));
+  const setS = (next: CharState) => patchS((cur) => ({ ...cur, ...pickEditable(next) }));
   const apply = (fn: (v: Vitals, a: number) => Vitals) => {
     if (!valid) return;
-    setV(fn(v, n));
+    safe(() => mutate(item.id, (cur) => ({ v: fn(cur, n) })));
     setAmount("");
   };
   const toggle = (id: string) =>
-    setS({ ...s, conditions: s.conditions.includes(id) ? s.conditions.filter((c) => c !== id) : [...s.conditions, id] });
+    patchS((cur) => ({ ...cur, conditions: cur.conditions.includes(id) ? cur.conditions.filter((c) => c !== id) : [...cur.conditions, id] }));
 
   if (v.maxHp === 0) return <Setup item={item} v={v} />;
 
@@ -159,6 +162,9 @@ function StatusTab({ item }: { item: Item }) {
   );
 }
 
+/** Campi modificati dal pannello Stato (il resto dello stato resta quello attuale del token). */
+const pickEditable = (s: CharState) => ({ exhaustion: s.exhaustion, concentration: s.concentration, deathSaves: s.deathSaves });
+
 function ConcentrationInput({ onSet }: { onSet: (name: string) => void }) {
   const [name, setName] = useState("");
   return (
@@ -200,8 +206,9 @@ function Setup({ item, v }: { item: Item; v: Vitals }) {
   );
 }
 
-/** Economia del turno (locale al telefono) + segnaposto delle azioni dalla scheda. */
-function ActionsTab() {
+/** Economia del turno (locale al telefono) + azioni dalla scheda. */
+function ActionsTab({ item }: { item: Item }) {
+  const sheet = readPg(item);
   const [used, setUsed] = useState<Record<string, boolean>>({});
   const econ = [
     ["action", "Azione"],
@@ -224,13 +231,29 @@ function ActionsTab() {
           Nuovo turno
         </button>
       </div>
-      <div className="card placeholder">
-        <h3>⚔️ Armi · ✨ Incantesimi · 🎯 Privilegi</h3>
-        <p className="muted">
-          Arriveranno dalla scheda: un tocco per attaccare o lanciare, tiro di dadi automatico e consumo di slot e
-          risorse.
-        </p>
-      </div>
+      {sheet ? (
+        <>
+          <ModeBar />
+          <h3 className="lvl-title">⚔️ Attacchi</h3>
+          <AttackList />
+          {sheet.incantesimi && (
+            <>
+              <h3 className="lvl-title">✨ Incantesimi preparati</h3>
+              <SpellSection onlyPrepared />
+            </>
+          )}
+          {sheet.risorse?.length ? (
+            <>
+              <h3 className="lvl-title">🎯 Risorse</h3>
+              <ResourceList />
+            </>
+          ) : null}
+        </>
+      ) : (
+        <div className="card placeholder">
+          <p className="muted">Collega una scheda per vedere qui armi, incantesimi e risorse con il tiro automatico.</p>
+        </div>
+      )}
     </div>
   );
 }

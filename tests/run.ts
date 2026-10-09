@@ -1,6 +1,10 @@
 // Test delle regole pure (movimento, PF): `npm test`
 import assert from "node:assert/strict";
 import { applyDamage, applyHeal, applyTempHp } from "../src/shared/hp.ts";
+import { parse, roll, doubleDice } from "../src/sheet/dice.ts";
+import { attackBonus, attackDamage, initiative, passivePerception, profBonus, saveBonus, skillBonus, spellDC, validatePg } from "../src/sheet/derive.ts";
+import type { PgSheet } from "../src/sheet/types.ts";
+import { readFileSync } from "node:fs";
 import { formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
 
 const D: Step = { dx: 1, dy: 1 };
@@ -8,7 +12,24 @@ const O: Step = { dx: 1, dy: 0 };
 const ft = { multiplier: 5, unit: "ft", digits: 0 };
 const m = { multiplier: 1.5, unit: "m", digits: 1 };
 
+const bran = JSON.parse(readFileSync(new URL("../examples/pg-esempio-guerriero.json", import.meta.url), "utf8")) as PgSheet;
+const ilsa = JSON.parse(readFileSync(new URL("../examples/pg-esempio-mago.json", import.meta.url), "utf8")) as PgSheet;
+let seq: number[] = [];
+const rng = () => (seq.shift() ?? 0) ;
+
 const cases: [string, () => void][] = [
+  ["dadi: parse valido/non valido", () => { assert.ok(parse("2d6+3")); assert.equal(parse("2d6+x"), null); }],
+  ["dadi: 1d20+5 con dado 14", () => { seq = [13 / 20]; assert.equal(roll("1d20+5", "normale", rng)!.total, 19); }],
+  ["dadi: vantaggio tiene il più alto", () => { seq = [2 / 20, 16 / 20]; const r = roll("1d20+1", "vantaggio", rng)!; assert.equal(r.total, 18); assert.equal(r.natural, 17); }],
+  ["dadi: 20 naturale = critico", () => { seq = [19.5 / 20]; assert.equal(roll("1d20+3", "normale", rng)!.crit, true); }],
+  ["dadi: critico raddoppia i dadi", () => assert.equal(doubleDice("1d8+3+2d6"), "2d8+3+4d6")],
+  ["scheda: esempi validi", () => { assert.deepEqual(validatePg(bran), []); assert.deepEqual(validatePg(ilsa), []); }],
+  ["scheda: competenza liv. 3 = +2, liv. 5 = +3", () => { assert.equal(profBonus(3), 2); assert.equal(profBonus(5), 3); }],
+  ["Bran: TS Forza +5, Atletica +5, Percezione passiva 13", () => {
+    assert.equal(saveBonus(bran, "for"), 5); assert.equal(skillBonus(bran, "atletica"), 5); assert.equal(passivePerception(bran), 13); }],
+  ["Bran: spada lunga +5, 1d8+3", () => {
+    assert.equal(attackBonus(bran, bran.attacchi[0]), 5); assert.deepEqual(attackDamage(bran, bran.attacchi[0]), [{ expr: "1d8+3", tipo: "Tagliente" }]); }],
+  ["Ilsa: CD incantesimi 13, iniziativa +2", () => { assert.equal(spellDC(ilsa), 13); assert.equal(initiative(ilsa), 2); }],
   ["5-10-5: tre diagonali = 4 caselle (20 ft)", () => assert.equal(pathCost([D, D, D], "ALTERNATING"), 4)],
   ["5-10-5: ortogonali non contano per l'alternanza", () => assert.equal(pathCost([D, O, D], "ALTERNATING"), 4)],
   ["5-10-5: prossima diagonale dopo una = 2", () => assert.equal(nextDiagonalCost([D], "ALTERNATING"), 2)],

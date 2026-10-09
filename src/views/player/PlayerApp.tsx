@@ -3,7 +3,7 @@
  * Home con ritratto e valori principali; in basso i quattro accessi:
  * MOVIMENTO · COMBATTIMENTO · ESPLORAZIONE · SCHEDA (ognuno si apre come popup).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import OBR, { type Item } from "@owlbear-rodeo/sdk";
 import { isCharacter, tokensOf } from "../../shared/assignment";
 import { itemImage, useItems, useMe, useObrReady, useSceneReady } from "../../shared/hooks";
@@ -13,6 +13,10 @@ import { MovePanel } from "../Controller";
 import { CombatPanel } from "./CombatPanel";
 import { ExplorePanel } from "./ExplorePanel";
 import { SheetPanel } from "./SheetPanel";
+import { SheetCtx } from "../sheet/parts";
+import { readPg } from "../../sheet/store";
+import { onLocalRoll, type RollMessage } from "../../sheet/rolls";
+import type { Mode } from "../../sheet/dice";
 
 export type Panel = "home" | "move" | "combat" | "explore" | "sheet";
 
@@ -27,6 +31,8 @@ export function PlayerApp() {
   const [panel, setPanel] = useState<Panel>("home");
   const [returnTo, setReturnTo] = useState<Panel>("home");
   const item = mine.find((i) => i.id === selectedId) ?? mine[0];
+  const sheet = readPg(item);
+  const [mode, setMode] = useState<Mode>("normale");
 
   const closeApp = () => OBR.modal.close(IDS.modalPlayer);
   const openMove = (from: Panel) => {
@@ -41,7 +47,7 @@ export function PlayerApp() {
     return <MovePanel itemId={item.id} onClose={() => setPanel(returnTo)} />;
   }
 
-  return (
+  const content = (
     <div className="pl">
       <header className="pl-top">
         <span className="muted">OBR Tavolo · {me.name}</span>
@@ -79,6 +85,43 @@ export function PlayerApp() {
       )}
       {item && panel === "explore" && <ExplorePanel item={item} onClose={() => setPanel("home")} />}
       {item && panel === "sheet" && <SheetPanel item={item} onClose={() => setPanel("home")} />}
+      <RollToast />
+    </div>
+  );
+
+  return sheet && item ? (
+    <SheetCtx.Provider value={{ sheet, item, mode, setMode }}>{content}</SheetCtx.Provider>
+  ) : (
+    content
+  );
+}
+
+/** Ultimo tiro, mostrato in basso per qualche secondo. */
+function RollToast() {
+  const [last, setLast] = useState<RollMessage | null>(null);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    const off = onLocalRoll((m) => {
+      setLast(m);
+      clearTimeout(t);
+      t = setTimeout(() => setLast(null), 7000);
+    });
+    return () => {
+      off();
+      clearTimeout(t);
+    };
+  }, []);
+  if (!last) return null;
+  return (
+    <div className={`roll-toast ${last.crit ? "crit" : last.fumble ? "fumble" : ""}`} onClick={() => setLast(null)}>
+      <div className="rt-label">{last.label}</div>
+      <div className="rt-total">
+        {last.total || last.detail ? last.total : "✓"}
+        {last.crit && <span className="rt-flag">CRITICO</span>}
+        {last.fumble && <span className="rt-flag">1 naturale</span>}
+      </div>
+      {last.detail && <div className="rt-detail">{last.detail}</div>}
+      {last.extra && <div className="rt-extra">{last.extra}</div>}
     </div>
   );
 }
@@ -86,7 +129,8 @@ export function PlayerApp() {
 function Hero({ item }: { item: Item }) {
   const v = readVitals(item);
   const s = readState(item);
-  const img = itemImage(item);
+  const pg = readPg(item);
+  const img = pg?.ritratto || itemImage(item);
   const pct = v.maxHp > 0 ? Math.max(0, Math.min(1, v.hp / v.maxHp)) : 1;
   const tone = v.maxHp === 0 ? "" : v.hp === 0 ? "down" : pct <= 0.5 ? "bloodied" : "healthy";
 
@@ -95,7 +139,12 @@ function Hero({ item }: { item: Item }) {
       <div className={`portrait ${tone}`}>
         {img ? <img src={img} alt="" /> : <span>{item.name.slice(0, 1)}</span>}
       </div>
-      <h1 className="pl-name">{item.name}</h1>
+      <h1 className="pl-name">{pg?.nome ?? item.name}</h1>
+      {pg && (
+        <div className="muted" style={{ textAlign: "center", marginTop: -6 }}>
+          {pg.specie} · {pg.classi.map((c) => `${c.classe} ${c.livello}`).join(" / ")}
+        </div>
+      )}
 
       <div className="tiles">
         <div className="tile wide">

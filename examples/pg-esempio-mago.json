@@ -1,0 +1,40 @@
+{
+  "tipo": "pg",
+  "versione": 1,
+  "id": "esempio-mago",
+  "nome": "Ilsa (esempio)",
+  "token": "Ilsa",
+  "specie": "Elfo",
+  "background": "Saggio",
+  "classi": [{ "classe": "Mago", "sottoclasse": "Invocatore", "livello": 3, "dadoVita": 6 }],
+  "caratteristiche": { "for": 8, "des": 14, "cos": 14, "int": 17, "sag": 12, "car": 10 },
+  "tiriSalvezza": ["int", "sag"],
+  "abilita": { "arcano": 1, "storia": 1, "indagare": 1, "percezione": 1 },
+  "pf": 20,
+  "ca": 12,
+  "velocita": { "camminare": 30 },
+  "sensi": ["Scurovisione 18 m"],
+  "linguaggi": ["Comune", "Elfico", "Draconico"],
+  "attacchi": [
+    { "nome": "Bastone", "tipo": "mischia", "car": "for", "danni": [{ "dadi": "1d6", "tipo": "Contundente" }], "padronanza": "Rovesciamento" }
+  ],
+  "incantesimi": {
+    "car": "int",
+    "slot": [4, 2],
+    "lista": [
+      { "nome": "Dardo di Fuoco", "livello": 0, "tempo": "Azione", "gittata": "36 m", "attacco": true, "danni": "1d10", "tipoDanni": "Fuoco" },
+      { "nome": "Mano Magica", "livello": 0, "tempo": "Azione", "gittata": "9 m" },
+      { "nome": "Dardo Incantato", "livello": 1, "preparato": true, "tempo": "Azione", "gittata": "36 m", "danni": "3d4+3", "tipoDanni": "Forza", "sintesi": "Tre dardi che colpiscono automaticamente (1d4+1 ciascuno)." },
+      { "nome": "Scudo", "livello": 1, "preparato": true, "tempo": "Reazione", "sintesi": "+5 alla CA fino all'inizio del tuo prossimo turno." },
+      { "nome": "Individua Magie", "livello": 1, "preparato": true, "rituale": true, "concentrazione": true, "tempo": "Azione" },
+      { "nome": "Sonno", "livello": 1, "preparato": true, "concentrazione": true, "tempo": "Azione", "ts": "sag" },
+      { "nome": "Passo Velato", "livello": 2, "preparato": true, "tempo": "Azione bonus", "sintesi": "Ti teletrasporti fino a 9 m." }
+    ]
+  },
+  "risorse": [{ "id": "recupero-arcano", "nome": "Recupero Arcano", "max": 1, "ricarica": "lungo" }],
+  "privilegi": [
+    { "nome": "Recupero Arcano", "fonte": "Mago 1", "sintesi": "Dopo un riposo breve recuperi slot per un totale di livelli pari a metà del livello da mago (arrotondato per eccesso)." }
+  ],
+  "inventario": [{ "nome": "Libro degli incantesimi" }, { "nome": "Bastone", "equip": true }, { "nome": "Focus arcano" }],
+  "monete": { "mo": 10 }
+}

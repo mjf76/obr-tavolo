@@ -10,6 +10,22 @@ import {
   useSceneReady,
 } from "../shared/hooks";
 import { MEASUREMENT_LABEL } from "../shared/movement";
+import { useEffect, useState } from "react";
+import { loadLibrary, type Library } from "../sheet/library";
+import { readSheet } from "../sheet/store";
+import { readVitals } from "../shared/vitals";
+import { PgSelect, SheetsSection } from "./gm/SheetsSection";
+import { SelectedCard } from "./gm/StatBlock";
+
+/** Token selezionati dal master (aggiornati in tempo reale). */
+function useSelection(sceneReady: boolean, all: Item[]): Item[] {
+  const [ids, setIds] = useState<string[]>([]);
+  useEffect(() => {
+    OBR.player.getSelection().then((s) => setIds(s ?? []));
+    return OBR.player.onChange((p) => setIds(p.selection ?? []));
+  }, []);
+  return sceneReady ? all.filter((i) => ids.includes(i.id)) : [];
+}
 
 export function GmHome() {
   const sceneReady = useSceneReady(true);
@@ -23,8 +39,42 @@ export function GmHome() {
   const canUpdate = perms.includes("CHARACTER_UPDATE");
   const ownerOnly = perms.includes("CHARACTER_OWNER_ONLY");
 
+  const [tab, setTab] = useState<"partita" | "prep">("partita");
+  const [lib, setLib] = useState<Library>({ pg: [], mostri: [] });
+  useEffect(() => {
+    loadLibrary().then(setLib);
+  }, []);
+  const selection = useSelection(sceneReady, characters);
+  const [publicRolls, setPublicRolls] = useState(false);
+
   return (
     <>
+      <div className="seg">
+        <button className={tab === "partita" ? "on" : ""} onClick={() => setTab("partita")}>
+          🎲 Partita
+        </button>
+        <button className={tab === "prep" ? "on" : ""} onClick={() => setTab("prep")}>
+          🛠 Preparazione
+        </button>
+      </div>
+
+      {tab === "partita" && (
+        <>
+          {selection.length === 1 && <SelectedCard item={selection[0]} publicRolls={publicRolls} />}
+          {selection.length === 1 && readSheet(selection[0])?.tipo === "mostro" && (
+            <label className="muted toggle">
+              <input type="checkbox" checked={publicRolls} onChange={(e) => setPublicRolls(e.target.checked)} /> Tiri dei
+              mostri visibili anche sul TV
+            </label>
+          )}
+          {selection.length !== 1 && <p className="muted">Seleziona un token per vederne scheda e PF.</p>}
+          <CombatList characters={characters} />
+        </>
+      )}
+
+      {tab === "prep" && (
+      <>
+      <SheetsSection lib={lib} setLib={setLib} characters={characters} selection={selection} />
       {/* ---- Scena e griglia ---- */}
       <div className="section">
         <h2>Scena</h2>
@@ -69,7 +119,7 @@ export function GmHome() {
         <h2>Personaggi nella scena ({characters.length})</h2>
         {sceneReady && characters.length === 0 && <p className="muted">Nessun token nel livello Character.</p>}
         {characters.map((item) => (
-          <CharacterRow key={item.id} item={item} players={players} ownerOnly={ownerOnly} />
+          <CharacterRow key={item.id} item={item} players={players} ownerOnly={ownerOnly} lib={lib} />
         ))}
         <p className="muted" style={{ marginTop: 6 }}>
           Puoi assegnare anche dal menu del token (tasto destro / tocco prolungato).
@@ -103,11 +153,49 @@ export function GmHome() {
           <div className="notice err">Lo schermo del tavolo è collegato come GM: mostrerà ciò che la nebbia nasconde.</div>
         )}
       </div>
+      </>
+      )}
     </>
   );
 }
 
-function CharacterRow({ item, players, ownerOnly }: { item: Item; players: Player[]; ownerOnly: boolean }) {
+/** Elenco rapido in partita: PF di tutti i personaggi della scena. */
+function CombatList({ characters }: { characters: Item[] }) {
+  if (!characters.length) return null;
+  return (
+    <div className="section">
+      <h2>In scena</h2>
+      {characters.map((c) => {
+        const v = readVitals(c);
+        const sh = readSheet(c);
+        const pct = v.maxHp ? v.hp / v.maxHp : 1;
+        return (
+          <div className="row" key={c.id} onClick={() => OBR.player.select([c.id])} style={{ cursor: "pointer" }}>
+            {itemImage(c) ? <img className="thumb" src={itemImage(c)} alt="" /> : <span className="thumb" />}
+            <div className="grow">
+              <div className="name">
+                {sh?.tipo === "mostro" ? "👹 " : getLink(c) ? "🧙 " : ""}
+                {c.name}
+              </div>
+              {v.maxHp > 0 && (
+                <div className="hpbar">
+                  <i style={{ width: `${Math.max(0, pct) * 100}%` }} className={v.hp === 0 ? "down" : pct <= 0.5 ? "bloodied" : ""} />
+                </div>
+              )}
+            </div>
+            {v.maxHp > 0 && (
+              <span className="num">
+                {v.hp}/{v.maxHp} · 🛡{v.ac}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CharacterRow({ item, players, ownerOnly, lib }: { item: Item; players: Player[]; ownerOnly: boolean; lib: Library }) {
   const link = getLink(item);
   const online = link ? players.find((p) => p.id === link.playerId) : undefined;
   const owned = link ? item.createdUserId === link.playerId : false;
@@ -143,6 +231,8 @@ function CharacterRow({ item, players, ownerOnly }: { item: Item; players: Playe
             {owned && <span className="badge ok" style={{ marginLeft: 6 }}>proprietario</span>}
           </div>
         )}
+        {link && <PgSelect item={item} lib={lib} />}
+        {!link && readSheet(item)?.tipo === "mostro" && <div className="muted">👹 {readSheet(item)!.nome}</div>}
         {link && ownerOnly && !owned && (
           <button className="small" style={{ marginTop: 4 }} disabled={!online} onClick={makeOwner}>
             Rendi proprietario

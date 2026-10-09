@@ -170,3 +170,99 @@ button.heal { background: #1f4a33; border-color: #2c6b49; }
 .econ button.spent { background: var(--panel-2); color: var(--muted); border-color: var(--line); text-decoration: line-through; }
 .action-card { display: flex; align-items: center; gap: 12px; }
 .action-icon { font-size: 26px; }
+
+/* ---------- Scheda ---------- */
+.small { font-size: 12px; }
+.muted.small, span.small { display: block; }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; }
+.tabs button { white-space: nowrap; font-size: 13px; padding: 6px 10px; border-radius: 99px; }
+.tabs button.on { background: var(--gold); color: #241d0b; border-color: var(--gold); font-weight: 700; }
+.mode-bar button.on.vantaggio { background: #1f4a33; border-color: var(--ok); color: var(--ok); }
+.mode-bar button.on.svantaggio { background: #5a2628; border-color: var(--err); color: #ffb3b3; }
+.mode-bar button.on.normale { background: var(--panel-2); color: var(--text); border-color: var(--gold); }
+.sheet-head { display: flex; flex-direction: column; gap: 8px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
+.kpi { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 12px; background: var(--panel-2); }
+.kpi:disabled { opacity: 1; }
+.kpi-v { font-size: 20px; font-weight: 800; }
+.kpi-l { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; }
+.rollable { position: relative; }
+.rollable:not(:disabled):active { background: #4a3b16; }
+.abil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.abil { display: flex; flex-direction: column; gap: 4px; }
+.abil-main { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 14px; background: var(--panel); }
+.abil-l { font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.abil-m { font-size: 24px; font-weight: 800; }
+.abil-s { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 0 8px; }
+.abil-save { font-size: 12px; padding: 4px; border-radius: 8px; }
+.abil-save.prof { border-color: var(--gold); color: var(--gold); }
+.list { display: flex; flex-direction: column; background: var(--panel); border-radius: 14px; overflow: hidden; }
+.list-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; text-align: left; width: 100%; }
+.list-row:first-child { border-top: 0; }
+button.list-row:hover { background: var(--panel-2); }
+.prof-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--muted); flex: none; }
+.prof-dot.p1 { background: var(--gold); border-color: var(--gold); }
+.prof-dot.p2 { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px var(--gold); }
+.atk-bonus { font-size: 18px; font-weight: 800; min-width: 42px; text-align: center; background: var(--panel-2); border-radius: 8px; padding: 4px; }
+.atk-dmg { font-size: 12px; color: var(--muted); max-width: 110px; text-align: right; }
+.pips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pip-s { width: 22px; height: 22px; border-radius: 50%; padding: 0; background: transparent; border: 2px solid var(--gold); }
+.pip-s.full { background: var(--gold); }
+.tag { font-size: 10px; border: 1px solid var(--line); border-radius: 6px; padding: 0 4px; margin-left: 6px; color: var(--muted); }
+.lvl-title { font-size: 13px; color: var(--muted); margin: 6px 0; text-transform: uppercase; letter-spacing: .05em; }
+.spell-btns { display: flex; flex-direction: column; gap: 4px; }
+.coins { display: flex; gap: 8px; flex-wrap: wrap; }
+.coin { background: var(--panel); border-radius: 99px; padding: 4px 12px; }
+.feature .small { margin-top: 2px; }
+
+/* ---------- Ultimo tiro ---------- */
+.roll-toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 50;
+  width: min(92vw, 420px); background: #2b2416; border: 2px solid var(--gold); border-radius: 18px; padding: 12px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6); animation: rise .2s ease-out; text-align: center;
+}
+.roll-toast.crit { border-color: var(--ok); background: #183324; }
+.roll-toast.fumble { border-color: var(--err); background: #3a1d1f; }
+.rt-label { font-size: 13px; color: var(--muted); }
+.rt-total { font-size: 44px; font-weight: 900; line-height: 1.1; }
+.rt-flag { font-size: 13px; margin-left: 8px; vertical-align: middle; color: var(--gold); }
+.rt-detail { font-size: 13px; color: var(--muted); }
+.rt-extra { font-size: 15px; margin-top: 4px; font-weight: 600; }
+
+/* ---------- Master: schede e stat block ---------- */
+.row-btns { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+.bind-row { display: flex; gap: 6px; margin: 8px 0; }
+.bind-row input { flex: 1; }
+.report { margin-top: 8px; font-size: 12px; max-height: 160px; overflow-y: auto; }
+.toggle { display: flex; align-items: center; gap: 6px; }
+.small-hp { grid-template-columns: 1fr 1fr 1fr; margin: 6px 0; }
+.statblock { border-top: 2px solid #7a3335; margin-top: 8px; padding-top: 6px; font-size: 13px; }
+.sb-line { margin: 2px 0; }
+.sb-abil { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 8px 0; }
+.sb-abil button { display: flex; flex-direction: column; align-items: center; padding: 4px 0; font-size: 11px; border-radius: 8px; }
+.sb-abil b { font-size: 14px; }
+.sb-title { color: #e08a8a; font-size: 14px; border-bottom: 1px solid #7a3335; margin: 10px 0 4px; }
+.sb-entry { margin: 4px 0; line-height: 1.45; }
+.inline-roll { padding: 0 4px; border-radius: 6px; font-size: 13px; background: #4a3b16; border-color: var(--gold); color: var(--gold); font-weight: 700; }
+
+/* ---------- Movimento compatto ---------- */
+/* Le pagine sovrapposte alla mappa devono essere davvero trasparenti:
+   con color-scheme scuro Chrome dipinge uno sfondo opaco dietro l'iframe. */
+html:has(> body.page-player), html:has(> body.page-controller), html:has(> body.page-assign) {
+  color-scheme: normal; background: transparent;
+}
+.ctrl-sheet.compact { gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+.ctrl-sheet.compact .ctrl-head .name { font-size: 16px; }
+.ctrl-body { display: flex; gap: 12px; align-items: stretch; }
+.ctrl-body .dpad { width: 168px; margin: 0; gap: 6px; flex: none; }
+.ctrl-body .dpad button { font-size: 22px; border-radius: 12px; }
+.ctrl-body .dpad button.center { font-size: 12px; }
+.ctrl-side { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: space-between; min-width: 0; }
+.meter-mini { background: var(--panel); border-radius: 12px; padding: 8px 10px; }
+.meter-mini .big { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.meter-mini.over { border: 1px solid var(--err); }
+.meter-mini.over .big { color: var(--err); }
+.ctrl-side button { padding: 12px 8px; }
+.ctrl-body .dpad { grid-template-columns: repeat(3, 54px); width: auto; }
+.ctrl-body .dpad button { padding: 0; min-width: 0; width: 54px; height: 54px; aspect-ratio: auto; }

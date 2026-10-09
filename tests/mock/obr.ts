@@ -11,14 +11,17 @@ const tok = (id: string, n: string, x: number, link?: [string, string]) => ({
 const k: any = tok("t1", "Kitiara", 150, ["p-anna", "Anna"]);
 k.metadata["com.owlbear-rodeo-bubbles-extension/metadata"] = { health: 12, "max health": 27, "temporary health": 5, "armor class": 16 };
 k.metadata["it.mjf.obr-tavolo/state"] = { conditions: ["poisoned", "prone"], exhaustion: 1, concentration: null, deathSaves: { ok: 0, ko: 0 } };
-let items: any[] = [k, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
+import bran from "../../examples/pg-esempio-guerriero.json";
+import ilsa from "../../examples/pg-esempio-mago.json";
+if (q.get("sheet") !== "no") k.metadata["it.mjf.obr-tavolo/sheet"] = q.get("pg") === "mago" ? ilsa : bran;
+let items: any[] = [k, tok("t4", "Goblin guerriero 2", 600), tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
 const subs: ((i: any[]) => void)[] = [];
 const noop = () => () => {};
 const ok = async () => {};
 const OBR: any = {
   isAvailable: true, isReady: true, onReady: (cb: () => void) => cb(),
   player: { getId: async () => (role === "GM" ? "gm" : "p-anna"), getName: async () => name, getRole: async () => role,
-    getColor: async () => "#e8c36a", onChange: noop, getSelection: async () => ["t1"] },
+    getColor: async () => "#e8c36a", onChange: noop, getSelection: async () => [q.get("sel") ?? "t1"] },
   party: { getPlayers: async () => [
     { id: "p-anna", connectionId: "c1", role: "PLAYER", name: "Anna", color: "#6fcf97", metadata: {} },
     { id: "p-bob", connectionId: "c2", role: "PLAYER", name: "Bruno", color: "#8fd3f2", metadata: {} },
@@ -33,6 +36,7 @@ const OBR: any = {
       getScale: async () => ({ raw: "5ft", parsed: { multiplier: 5, unit: "ft", digits: 0 } }), getType: async () => "SQUARE",
       onChange: noop, setMeasurement: ok } },
   room: { getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
+  broadcast: { sendMessage: ok, onMessage: noop },
   modal: { open: async (m: any) => { location.href = m.url; }, close: ok },
   action: { close: ok }, notification: { show: async (m: string) => console.log("NOTIFICA", m) },
   viewport: { getScale: async () => 1, getWidth: async () => 400, getHeight: async () => 800, animateTo: ok },

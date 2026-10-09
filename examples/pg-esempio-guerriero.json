@@ -1,0 +1,60 @@
+{
+  "tipo": "pg",
+  "versione": 1,
+  "id": "esempio-guerriero",
+  "nome": "Bran (esempio)",
+  "token": "Bran",
+  "giocatore": "",
+  "specie": "Umano",
+  "background": "Soldato",
+  "classi": [{ "classe": "Guerriero", "sottoclasse": "Campione", "livello": 3, "dadoVita": 10 }],
+  "caratteristiche": { "for": 16, "des": 14, "cos": 14, "int": 10, "sag": 12, "car": 8 },
+  "tiriSalvezza": ["for", "cos"],
+  "abilita": { "atletica": 1, "intimidire": 1, "percezione": 1, "sopravvivenza": 1 },
+  "pf": 28,
+  "ca": 18,
+  "velocita": { "camminare": 30 },
+  "linguaggi": ["Comune", "Nanico"],
+  "competenze": {
+    "armature": ["Leggere", "Medie", "Pesanti", "Scudi"],
+    "armi": ["Semplici", "Da guerra"],
+    "strumenti": ["Gioco (dadi)"]
+  },
+  "attacchi": [
+    {
+      "nome": "Spada Lunga",
+      "tipo": "mischia",
+      "car": "for",
+      "danni": [{ "dadi": "1d8", "tipo": "Tagliente" }],
+      "padronanza": "Fiaccare",
+      "proprieta": "Versatile (1d10)"
+    },
+    {
+      "nome": "Arco Lungo",
+      "tipo": "distanza",
+      "car": "des",
+      "danni": [{ "dadi": "1d8", "tipo": "Perforante" }],
+      "gittata": "45/180 m",
+      "padronanza": "Lentezza",
+      "proprieta": "Munizioni, Pesante, A due mani"
+    }
+  ],
+  "risorse": [
+    { "id": "recuperare-energie", "nome": "Recuperare Energie", "max": 2, "ricarica": "lungo", "perBreve": 1 },
+    { "id": "azione-impetuosa", "nome": "Azione Impetuosa", "max": 1, "ricarica": "breve" }
+  ],
+  "privilegi": [
+    { "nome": "Recuperare Energie", "fonte": "Guerriero 1", "sintesi": "Azione bonus: recuperi 1d10 + livello da guerriero PF." },
+    { "nome": "Azione Impetuosa", "fonte": "Guerriero 2", "sintesi": "Nel tuo turno ottieni un'azione aggiuntiva (non Magia)." },
+    { "nome": "Critico Migliorato", "fonte": "Campione 3", "sintesi": "I tuoi tiri per colpire con armi e colpi senz'armi sono critici con 19 o 20." }
+  ],
+  "inventario": [
+    { "nome": "Cotta di maglia", "equip": true },
+    { "nome": "Scudo", "equip": true },
+    { "nome": "Spada Lunga", "equip": true },
+    { "nome": "Arco Lungo" },
+    { "nome": "Frecce", "qta": 20 }
+  ],
+  "monete": { "mo": 14 },
+  "note": "Scheda di esempio per provare l'app."
+}

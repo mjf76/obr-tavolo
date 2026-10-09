@@ -6,6 +6,8 @@
 import OBR, { type Item, type Player } from "@owlbear-rodeo/sdk";
 import { isCharacter, rebindByName } from "../shared/assignment";
 import { IDS, KEYS, pageUrl } from "../shared/keys";
+import { effectiveRole, loadDeviceMode } from "../shared/device";
+import { ROLL_CHANNEL, rollText, type RollMessage } from "../sheet/rolls";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -18,6 +20,16 @@ OBR.onReady(async () => {
       },
     ],
     embed: { url: pageUrl("assign.html"), height: 160 },
+  });
+
+  // Tiri dei giocatori: notifica sul tablet del master e sullo schermo TAVOLO.
+  OBR.broadcast.onMessage(ROLL_CHANNEL, async ({ data }) => {
+    const m = data as RollMessage;
+    const [role, name] = await Promise.all([OBR.player.getRole(), OBR.player.getName()]);
+    const app = effectiveRole(role, name, loadDeviceMode());
+    if (app === "PLAYER") return;
+    if (m.secret && app !== "GM") return;
+    await OBR.notification.show(rollText(m), m.crit ? "SUCCESS" : m.fumble ? "WARNING" : "DEFAULT");
   });
 
   if ((await OBR.player.getRole()) !== "GM") return;
