@@ -24,13 +24,14 @@ OBR.onReady(async () => {
     embed: { url: pageUrl("assign.html"), height: 160 },
   });
 
-  // Tiri dei giocatori: notifica sul tablet del master e sullo schermo TAVOLO.
+  // Tiri: notifica sul tablet del master e sullo schermo TAVOLO;
+  // ai giocatori arrivano solo i tiri pubblici del master (mostri), non quelli degli altri PG.
   OBR.broadcast.onMessage(ROLL_CHANNEL, async ({ data }) => {
     const m = data as RollMessage;
     const [role, name] = await Promise.all([OBR.player.getRole(), OBR.player.getName()]);
     const app = effectiveRole(role, name, loadDeviceMode());
-    if (app === "PLAYER") return;
     if (m.secret && app !== "GM") return;
+    if (app === "PLAYER" && !m.gm) return;
     await OBR.notification.show(rollText(m), m.crit ? "SUCCESS" : m.fumble ? "WARNING" : "DEFAULT");
   });
 

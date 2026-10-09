@@ -63,7 +63,7 @@ export function GmHome() {
           {selection.length === 1 && readSheet(selection[0])?.tipo === "mostro" && (
             <label className="muted toggle">
               <input type="checkbox" checked={publicRolls} onChange={(e) => setPublicRolls(e.target.checked)} /> Tiri dei
-              mostri visibili anche sul TV
+              mostri visibili a TV e giocatori
             </label>
           )}
           {selection.length !== 1 && <p className="muted">Tocca un token (sulla mappa o nell'elenco) per vederne scheda e PF.</p>}
@@ -76,7 +76,7 @@ export function GmHome() {
         </>
       )}
 
-      {tab === "incontro" && <EncounterTab characters={characters} combat={combat} focus={selection} />}
+      {tab === "incontro" && <EncounterTab characters={characters} combat={combat} focus={selection} publicRolls={publicRolls} setPublicRolls={setPublicRolls} />}
 
       {tab === "prep" && (
       <>

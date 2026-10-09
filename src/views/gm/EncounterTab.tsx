@@ -54,9 +54,20 @@ async function numberDuplicates(ms: Item[]) {
   });
 }
 
-export function EncounterTab({ characters, combat, focus }: { characters: Item[]; combat: CombatState; focus: Item[] }) {
+export function EncounterTab({
+  characters,
+  combat,
+  focus,
+  publicRolls,
+  setPublicRolls,
+}: {
+  characters: Item[];
+  combat: CombatState;
+  focus: Item[];
+  publicRolls: boolean;
+  setPublicRolls: (v: boolean) => void;
+}) {
   const focusId = focus.length === 1 ? focus[0].id : null;
-  const [publicRolls, setPublicRolls] = useState(false);
   /** Tocca un partecipante: si apre la sua scheda sotto la riga (tocca di nuovo per chiudere). */
   const toggle = (id: string) => setFocus(focusId === id ? [] : [id]);
   const detail = (id: string) => {
@@ -69,7 +80,7 @@ export function EncounterTab({ characters, combat, focus }: { characters: Item[]
           <button className="small" onClick={() => centerViewOn(id)}>📍 Mostrami dov'è</button>
           {readSheet(it)?.tipo === "mostro" && (
             <label className="muted toggle small">
-              <input type="checkbox" checked={publicRolls} onChange={(e) => setPublicRolls(e.target.checked)} /> tiri visibili sul TV
+              <input type="checkbox" checked={publicRolls} onChange={(e) => setPublicRolls(e.target.checked)} /> tiri visibili a TV e giocatori
             </label>
           )}
         </div>

@@ -1,6 +1,7 @@
 /**
  * Tiri di dado condivisi: il risultato appare sul telefono di chi tira,
  * sul tablet del master e sullo schermo TAVOLO (notifica Owlbear).
+ * I tiri pubblici del master (mostri) arrivano anche ai telefoni dei giocatori.
  */
 import OBR from "@owlbear-rodeo/sdk";
 import { NS } from "../shared/keys";
@@ -19,6 +20,8 @@ export interface RollMessage {
   fumble?: boolean;
   /** visibile solo a chi tira e al master */
   secret?: boolean;
+  /** tirato dal master (mostri/PNG) */
+  gm?: boolean;
   /** riga aggiuntiva (es. danni dopo il colpo) */
   extra?: string;
 }
@@ -33,8 +36,8 @@ export function onLocalRoll(fn: Listener) {
 }
 
 export async function share(msg: Omit<RollMessage, "byId" | "byName">) {
-  const [byId, byName] = await Promise.all([OBR.player.getId(), OBR.player.getName()]);
-  const full: RollMessage = { ...msg, byId, byName };
+  const [byId, byName, role] = await Promise.all([OBR.player.getId(), OBR.player.getName(), OBR.player.getRole()]);
+  const full: RollMessage = { ...msg, byId, byName, gm: role === "GM" };
   listeners.forEach((l) => l(full));
   try {
     // ALL: anche il master vede i propri tiri (i giocatori li vedono già nell app)

@@ -45,7 +45,7 @@ PF e CA sono scritti sul token con le chiavi di *Stat Bubbles for D&D*: se l'est
    In alternativa: seleziona uno o più token, cerca il mostro e premi **Collega**.
 
 ### In sessione
-- **Master, scheda Partita**: tocca un token per vederne il blocco statistiche. I tiri per colpire e i danni sono pulsanti; c'è il riquadro Danno/Cura e l'elenco di tutti i PF in scena. I tiri dei mostri sono segreti, salvo l'opzione "visibili anche sul TV".
+- **Master, scheda Partita**: tocca un token per vederne il blocco statistiche. I tiri per colpire e i danni sono pulsanti; c'è il riquadro Danno/Cura e l'elenco di tutti i PF in scena. I tiri dei mostri sono segreti, salvo la spunta "visibili a TV e giocatori": in quel caso il risultato compare come notifica sul TV e sui telefoni dei giocatori (una sola impostazione, valida sia in Partita sia in Incontro). I tiri dei PG restano sul telefono di chi tira, sul master e sul TV.
 - **Giocatore**:
   - **Scheda**: caratteristiche, tiri salvezza, abilità, attacchi, incantesimi, inventario, privilegi; si tira con un tocco, scegliendo prima Vantaggio o Svantaggio.
   - **Combattimento → Azioni**: attacchi, incantesimi preparati con consumo degli slot, risorse.
