@@ -5,6 +5,7 @@ import { parse, roll, doubleDice } from "../src/sheet/dice.ts";
 import { attackBonus, attackDamage, initiative, passivePerception, profBonus, saveBonus, skillBonus, spellDC, validatePg } from "../src/sheet/derive.ts";
 import type { PgSheet } from "../src/sheet/types.ts";
 import { readFileSync } from "node:fs";
+import { contoursFromCommands, describeFrom, pointAlong } from "../src/shared/doorGeom.ts";
 import { lightFor, parseDarkvisionFt } from "../src/shared/visionRules.ts";
 import { crossesWall, snapToGrid, formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
 
@@ -57,6 +58,11 @@ const cases: [string, () => void][] = [
     assert.equal(crossesWall({ x: 75, y: 225 }, { x: 225, y: 225 }, [[{ x: 150, y: 0 }, { x: 150, y: 150 }], [{ x: 150, y: 300 }, { x: 150, y: 450 }]]), false)],
   ["griglia: token Medio torna al centro", () => assert.deepEqual(snapToGrid({ x: 160, y: 230 }, 150, 1), { x: 225, y: 225 })],
   ["griglia: token Grande sull'incrocio", () => assert.deepEqual(snapToGrid({ x: 310, y: 290 }, 150, 2), { x: 300, y: 300 })],
+  ["porta: centro sul segmento", () =>
+    assert.deepEqual(pointAlong(contoursFromCommands([[0, 0, 0], [1, 300, 0]])[0], 150), { x: 150, y: 0 })],
+  ["porta: centro su contorno chiuso", () =>
+    assert.deepEqual(pointAlong(contoursFromCommands([[0, 0, 0], [1, 100, 0], [1, 100, 100], [5]])[0], 150), { x: 100, y: 50 })],
+  ["porta: direzione", () => assert.equal(describeFrom({ x: 0, y: 0 }, { x: 300, y: -300 }, 150), "2 caselle a nord-est")],
   ["scurovisione in metri", () => assert.equal(parseDarkvisionFt("Scurovisione 18 m"), 60)],
   ["scurovisione in piedi", () => assert.equal(parseDarkvisionFt("Darkvision 120 ft., Passive Perception 12"), 120)],
   ["nessuna scurovisione", () => assert.equal(parseDarkvisionFt("Nessuna scurovisione"), 0)],

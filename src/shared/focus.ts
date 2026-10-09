@@ -101,20 +101,20 @@ export function useFocusHighlight(focus: Item[]) {
   }, [id]);
 }
 
-/** Centra la vista del master sul token. */
 /**
  * Centra e ingrandisce la mappa sull'esemplare: circa 11 caselle (5 per lato) nel lato corto
  * della parte di mappa visibile. Nel pannello a metà schermo conta solo la parte sopra il pannello.
  */
 export async function centerViewOn(itemId: string, cells = 11) {
-  const [b, dpi, w, h] = await Promise.all([
-    OBR.scene.items.getItemBounds([itemId]),
-    OBR.scene.grid.getDpi(),
-    OBR.viewport.getWidth(),
-    OBR.viewport.getHeight(),
-  ]);
+  const b = await OBR.scene.items.getItemBounds([itemId]);
+  await centerOnPoint(b.center, cells);
+}
+
+/** Centra e ingrandisce la mappa su un punto (circa `cells` caselle nel lato corto visibile). */
+export async function centerOnPoint(p: { x: number; y: number }, cells = 11) {
+  const [dpi, w, h] = await Promise.all([OBR.scene.grid.getDpi(), OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
   const inBottomPanel = location.pathname.endsWith("gm.html");
   const visibleH = inBottomPanel ? Math.max(h - window.innerHeight, h * 0.25) : h;
   const scale = Math.min(w, visibleH) / (cells * dpi);
-  await OBR.viewport.animateTo({ position: { x: w / 2 - b.center.x * scale, y: visibleH / 2 - b.center.y * scale }, scale });
+  await OBR.viewport.animateTo({ position: { x: w / 2 - p.x * scale, y: visibleH / 2 - p.y * scale }, scale });
 }

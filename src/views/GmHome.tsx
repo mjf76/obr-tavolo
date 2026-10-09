@@ -20,6 +20,7 @@ import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
 import { realign } from "../shared/walls";
+import { DoorsSection } from "./gm/DoorsSection";
 import { AmbientSwitch, useVisionSettings, VisionSection } from "./gm/VisionSection";
 import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
@@ -87,6 +88,7 @@ export function GmHome() {
               📐 Riallinea tutti i token
             </button>
           </div>
+          <DoorsSection sceneReady={sceneReady} characters={characters} selection={selection} dpi={grid?.dpi ?? 150} />
           <CombatList characters={characters} />
         </>
       )}
