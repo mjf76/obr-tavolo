@@ -9,6 +9,7 @@ import { ABILITIES, ABILITY_SHORT, type Monster } from "../../sheet/types";
 import { applyDamage, applyHeal, mutate, readVitals } from "../../shared/vitals";
 import { passivePerception, saveBonus } from "../../sheet/derive";
 import { IDS, pageUrl } from "../../shared/keys";
+import { realign } from "../../shared/walls";
 
 export function SelectedCard({ item, publicRolls }: { item: Item; publicRolls: boolean }) {
   const sheet = readSheet(item);
@@ -28,6 +29,7 @@ export function SelectedCard({ item, publicRolls }: { item: Item; publicRolls: b
       {v.maxHp > 0 && <QuickHp item={item} />}
       <div className="row-btns">
         <button onClick={() => openMoveFor(item.id)}>🧭 Muovi</button>
+        <button onClick={() => realign([item])} title="Riporta il token al centro della casella">📐 Allinea</button>
         <button onClick={() => OBR.scene.items.updateItems([item.id], (it) => it.forEach((i) => (i.visible = !i.visible)))}>
           {item.visible ? "🙈 Nascondi" : "👁 Rivela"}
         </button>

@@ -93,6 +93,8 @@ Non bisogna aprire niente sul TV: la nebbia la disegna Owlbear su ogni dispositi
 - **Luci della mappa** (torce, bracieri, finestre) vanno impostate in Dynamic Fog come luci **secondarie**: si accendono per i giocatori quando un PG le ha in linea di vista.
 - **Mostri**: non devono avere luci *primarie*, altrimenti i giocatori vedono ciò che vede il mostro. Se ne trova, la sezione lo segnala e offre **Rendile secondarie**.
 - Il TV e i telefoni vedono l'unione di ciò che vedono tutti i PG.
+- **Muri e porte nel movimento**: la pulsantiera non fa attraversare muri e porte chiuse, nemmeno tagliando un angolo in diagonale. Il token resta fermo e il telefono vibra. Se un token è fuori asse, al passo successivo torna da solo al centro della casella.
+- **Master**: con **📐 Allinea** (scheda del token selezionato) o **📐 Riallinea tutti i token** (scheda Partita) rimetti i token al centro delle caselle. I token Grandi e Mastodontici vanno sugli incroci delle linee.
 
 ---
 

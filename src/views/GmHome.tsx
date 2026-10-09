@@ -19,6 +19,7 @@ import { SelectedCard } from "./gm/StatBlock";
 import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
+import { realign } from "../shared/walls";
 import { AmbientSwitch, useVisionSettings, VisionSection } from "./gm/VisionSection";
 import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
@@ -70,11 +71,22 @@ export function GmHome() {
             </label>
           )}
           {selection.length !== 1 && <p className="muted">Tocca un token (sulla mappa o nell'elenco) per vederne scheda e PF.</p>}
-          {table && (
-            <button className="small" onClick={() => askTvFit()}>
-              📺 Reinquadra la mappa sul TV
+          <div className="row-btns">
+            {table && (
+              <button className="small" onClick={() => askTvFit()}>
+                📺 Reinquadra la mappa sul TV
+              </button>
+            )}
+            <button
+              className="small"
+              onClick={async () => {
+                const n = await realign(characters);
+                await OBR.notification.show(n ? `Riallineati ${n} token alla griglia` : "Tutti i token sono già allineati", "INFO");
+              }}
+            >
+              📐 Riallinea tutti i token
             </button>
-          )}
+          </div>
           <CombatList characters={characters} />
         </>
       )}

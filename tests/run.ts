@@ -6,7 +6,7 @@ import { attackBonus, attackDamage, initiative, passivePerception, profBonus, sa
 import type { PgSheet } from "../src/sheet/types.ts";
 import { readFileSync } from "node:fs";
 import { lightFor, parseDarkvisionFt } from "../src/shared/visionRules.ts";
-import { formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
+import { crossesWall, snapToGrid, formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
 
 const D: Step = { dx: 1, dy: 1 };
 const O: Step = { dx: 1, dy: 0 };
@@ -47,6 +47,16 @@ const cases: [string, () => void][] = [
   ["cura: non oltre il massimo", () => assert.equal(applyHeal({ hp: 8, maxHp: 10, tempHp: 0, ac: 10 }, 9).hp, 10)],
   ["PF temp: non si sommano, vince il più alto", () =>
     assert.equal(applyTempHp({ hp: 8, maxHp: 10, tempHp: 6, ac: 10 }, 4).tempHp, 6)],
+  ["muro: passo attraverso il muro bloccato", () =>
+    assert.equal(crossesWall({ x: 75, y: 75 }, { x: 225, y: 75 }, [[{ x: 150, y: 0 }, { x: 150, y: 300 }]]), true)],
+  ["muro: passo parallelo libero", () =>
+    assert.equal(crossesWall({ x: 75, y: 75 }, { x: 75, y: 225 }, [[{ x: 150, y: 0 }, { x: 150, y: 300 }]]), false)],
+  ["muro: diagonale che taglia l'angolo bloccata", () =>
+    assert.equal(crossesWall({ x: 75, y: 75 }, { x: 225, y: 225 }, [[{ x: 0, y: 150 }, { x: 150, y: 150 }, { x: 150, y: 0 }]]), true)],
+  ["muro: varco della porta aperta libero", () =>
+    assert.equal(crossesWall({ x: 75, y: 225 }, { x: 225, y: 225 }, [[{ x: 150, y: 0 }, { x: 150, y: 150 }], [{ x: 150, y: 300 }, { x: 150, y: 450 }]]), false)],
+  ["griglia: token Medio torna al centro", () => assert.deepEqual(snapToGrid({ x: 160, y: 230 }, 150, 1), { x: 225, y: 225 })],
+  ["griglia: token Grande sull'incrocio", () => assert.deepEqual(snapToGrid({ x: 310, y: 290 }, 150, 2), { x: 300, y: 300 })],
   ["scurovisione in metri", () => assert.equal(parseDarkvisionFt("Scurovisione 18 m"), 60)],
   ["scurovisione in piedi", () => assert.equal(parseDarkvisionFt("Darkvision 120 ft., Passive Perception 12"), 120)],
   ["nessuna scurovisione", () => assert.equal(parseDarkvisionFt("Nessuna scurovisione"), 0)],

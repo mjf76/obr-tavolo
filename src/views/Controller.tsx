@@ -3,7 +3,8 @@ import OBR, { type Vector2 } from "@owlbear-rodeo/sdk";
 import { isCharacter, tokensOf } from "../shared/assignment";
 import { useGrid, useItems, useMe, useObrReady, useSceneReady } from "../shared/hooks";
 import { IDS } from "../shared/keys";
-import { formatDistance, nextDiagonalCost, pathCost, type Dir, type Step } from "../shared/movement";
+import { crossesWall, formatDistance, nextDiagonalCost, pathCost, snapToGrid, type Dir, type Step } from "../shared/movement";
+import { getWalls } from "../shared/walls";
 import { readPg, readSheet } from "../sheet/store";
 import type { Sheet } from "../sheet/types";
 
@@ -119,16 +120,44 @@ export function MovePanel({ onClose, itemId }: { onClose: () => void; itemId?: s
       const id = item.id;
       const dpi = grid.dpi;
       queue.current = queue.current.then(async () => {
-        const from = posRef.current;
-        if (!from) return;
+        const raw = posRef.current;
+        if (!raw) return;
+        // taglia in caselle (1 = Media/Piccola, 2 = Grande…) per riallineare il centro alla griglia
+        const b = await OBR.scene.items.getItemBounds([id]).catch(() => null);
+        const size = b ? Math.max(1, Math.round(Math.min(b.width, b.height) / dpi)) : 1;
+        const from = snapToGrid(raw, dpi, size);
+        const misaligned = Math.abs(from.x - raw.x) > 0.5 || Math.abs(from.y - raw.y) > 0.5;
         const to = { x: from.x + dx * dpi, y: from.y + dy * dpi };
+        if (crossesWall(from, to, await getWalls())) {
+          // muro o porta chiusa: non si muove (e, se era storto, torna al centro della casella)
+          if (misaligned) {
+            await OBR.scene.items.updateItems([id], (items) => {
+              for (const i of items) i.position = from;
+            });
+            posRef.current = from;
+          }
+          navigator.vibrate?.([30, 40, 30]);
+          await OBR.notification.show("Di lì non si passa: muro o porta chiusa", "WARNING");
+          return;
+        }
         try {
           await OBR.scene.items.updateItems([id], (items) => {
             for (const i of items) i.position = to;
           });
           const [after] = await OBR.scene.items.getItems([id]);
           if (!after || after.position.x !== to.x || after.position.y !== to.y) {
-            await OBR.notification.show("Movimento non consentito: chiedi al master i permessi", "WARNING");
+            const unchanged = after && Math.abs(after.position.x - raw.x) < 0.5 && Math.abs(after.position.y - raw.y) < 0.5;
+            if (after && !unchanged) {
+              // respinto da un muro che non passa sul bordo della casella: torna al centro di partenza
+              await OBR.scene.items.updateItems([id], (items) => {
+                for (const i of items) i.position = from;
+              });
+              posRef.current = from;
+              navigator.vibrate?.([30, 40, 30]);
+              await OBR.notification.show("Di lì non si passa: muro o porta chiusa", "WARNING");
+            } else {
+              await OBR.notification.show("Movimento non consentito: chiedi al master i permessi", "WARNING");
+            }
             return;
           }
           posRef.current = to;

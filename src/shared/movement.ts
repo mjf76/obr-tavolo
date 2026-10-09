@@ -79,3 +79,45 @@ export const MEASUREMENT_LABEL: Record<Measurement, string> = {
   EUCLIDEAN: "Euclidea (distanza reale)",
   MANHATTAN: "Manhattan (diagonale = 2 caselle)",
 };
+
+/** Punto/segmento in coordinate di mappa (pixel). */
+export interface P {
+  x: number;
+  y: number;
+}
+
+const cross = (o: P, a: P, b: P) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+const onSeg = (p: P, a: P, b: P) =>
+  Math.min(a.x, b.x) - 1e-6 <= p.x && p.x <= Math.max(a.x, b.x) + 1e-6 && Math.min(a.y, b.y) - 1e-6 <= p.y && p.y <= Math.max(a.y, b.y) + 1e-6;
+
+/** I segmenti ab e cd si toccano o si incrociano (anche solo in un estremo: niente "angoli tagliati"). */
+export function segmentsTouch(a: P, b: P, c: P, d: P): boolean {
+  const d1 = cross(c, d, a);
+  const d2 = cross(c, d, b);
+  const d3 = cross(a, b, c);
+  const d4 = cross(a, b, d);
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+  const eps = 1e-6;
+  return (
+    (Math.abs(d1) < eps && onSeg(a, c, d)) ||
+    (Math.abs(d2) < eps && onSeg(b, c, d)) ||
+    (Math.abs(d3) < eps && onSeg(c, a, b)) ||
+    (Math.abs(d4) < eps && onSeg(d, a, b))
+  );
+}
+
+/** Il passo da `from` a `to` attraversa una delle polilinee (muri)? */
+export function crossesWall(from: P, to: P, walls: P[][]): boolean {
+  for (const w of walls) for (let i = 1; i < w.length; i++) if (segmentsTouch(from, to, w[i - 1], w[i])) return true;
+  return false;
+}
+
+/**
+ * Centro corretto sulla griglia: token di 1, 3… caselle al centro della casella,
+ * token di 2, 4… caselle sull'incrocio delle linee.
+ */
+export function snapToGrid(p: P, dpi: number, sizeCells: number): P {
+  const off = sizeCells % 2 === 1 ? dpi / 2 : 0;
+  const s = (v: number) => Math.round((v - off) / dpi) * dpi + off;
+  return { x: s(p.x), y: s(p.y) };
+}
