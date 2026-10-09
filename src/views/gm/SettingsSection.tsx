@@ -7,8 +7,10 @@ import { FOG_LIGHT_KEY } from "../../shared/vision";
 import { DOORS_KEY } from "../../shared/doors";
 import { isPcToken } from "../../shared/combat";
 import { doorNumbersOn, setDoorNumbers } from "../../shared/doors";
+import { loadProtectHidden, saveProtectHidden } from "../../shared/focus";
+import { setVisionSettings, type VisionSettings } from "../../shared/vision";
 
-export function SettingsSection({ characters, dpi }: { characters: Item[]; dpi: number }) {
+export function SettingsSection({ characters, dpi, vision }: { characters: Item[]; dpi: number; vision: VisionSettings }) {
   const s = useRoomSettings();
   return (
     <details className="section">
@@ -25,6 +27,11 @@ export function SettingsSection({ characters, dpi }: { characters: Item[]; dpi: 
           </option>
         ))}
       </select>
+      <label className="toggle small" style={{ display: "block", marginTop: 10 }}>
+        <input type="checkbox" checked={vision.auto} onChange={(e) => setVisionSettings({ auto: e.target.checked })} /> Visione dei PG
+        automatica (scurovisione e luce portata dalla scheda). Se la spegni, le luci si impostano a mano con Dynamic Fog.
+      </label>
+      <ProtectToggle />
       <DoorNumbersToggle />
       <Diagnostics characters={characters} dpi={dpi} />
     </details>
@@ -82,6 +89,24 @@ function DoorNumbersToggle() {
         }}
       />{" "}
       Numeri delle porte sulla mappa (solo su questo dispositivo)
+    </label>
+  );
+}
+
+/** I giocatori vedono le selezioni del master (etichetta "GM") anche sui token nascosti. */
+function ProtectToggle() {
+  const [on, setOn] = useState(loadProtectHidden);
+  return (
+    <label className="toggle small" style={{ display: "block", marginTop: 10 }}>
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={(e) => {
+          saveProtectHidden(e.target.checked);
+          setOn(e.target.checked);
+        }}
+      />{" "}
+      Token nascosti: annulla subito la selezione (i giocatori vedrebbero l'etichetta "GM"). Per spostarli usa 🧭 Muovi.
     </label>
   );
 }

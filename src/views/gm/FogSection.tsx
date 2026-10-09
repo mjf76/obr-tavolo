@@ -3,13 +3,17 @@ import type { VisionSettings } from "../../shared/vision";
 import { setVisionSettings } from "../../shared/vision";
 import { useItems } from "../../shared/hooks";
 import { closeAll, hasDoors, listDoors, setDoorOpen } from "../../shared/doors";
+import { makeSecondary, monstersWithPrimaryLight } from "../../shared/vision";
+import { isPcToken } from "../../shared/combat";
+import type { Item } from "@owlbear-rodeo/sdk";
 
-export function FogSection({ sceneReady, settings }: { sceneReady: boolean; settings: VisionSettings }) {
+export function FogSection({ sceneReady, settings, characters }: { sceneReady: boolean; settings: VisionSettings; characters: Item[] }) {
   const doorItems = useItems(sceneReady, hasDoors);
   const doors = listDoors(doorItems);
   if (!settings.auto && !doors.length) return null;
   const dark = settings.ambiente === "buio";
   const openCount = doors.filter((d) => d.open).length;
+  const lit = monstersWithPrimaryLight(characters.filter((c) => !isPcToken(c)));
   return (
     <div className="section fog-section">
       <div className="sec-head">
@@ -42,6 +46,14 @@ export function FogSection({ sceneReady, settings }: { sceneReady: boolean; sett
               ✕ tutte
             </button>
           )}
+        </div>
+      )}
+      {lit.length > 0 && (
+        <div className="notice err" style={{ marginTop: 6 }}>
+          Luce primaria su {lit.map((m) => m.name).join(", ")}: i giocatori vedrebbero ciò che vede.{" "}
+          <button className="small" onClick={() => makeSecondary(lit.map((m) => m.id))}>
+            Rendila secondaria
+          </button>
         </div>
       )}
     </div>

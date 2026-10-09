@@ -9,7 +9,6 @@ import {
   useRoomPermissions,
   useSceneReady,
 } from "../shared/hooks";
-import { MEASUREMENT_LABEL } from "../shared/movement";
 import { useEffect, useState } from "react";
 import { loadLibrary, type Library } from "../sheet/library";
 import { readSheet } from "../sheet/store";
@@ -22,8 +21,8 @@ import { EncounterTab } from "./gm/EncounterTab";
 import { realign } from "../shared/walls";
 import { FogSection } from "./gm/FogSection";
 import { SettingsSection } from "./gm/SettingsSection";
-import { useVisionSettings, VisionSection } from "./gm/VisionSection";
-import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
+import { useVisionSettings } from "./gm/VisionSection";
+import { setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
 export function GmHome() {
   const sceneReady = useSceneReady(true);
@@ -71,7 +70,7 @@ export function GmHome() {
               mostri visibili a TV e giocatori
             </label>
           )}
-          <FogSection sceneReady={sceneReady} settings={vision} />
+          <FogSection sceneReady={sceneReady} settings={vision} characters={characters} />
           <CombatList characters={characters} table={!!table} />
         </>
       )}
@@ -81,39 +80,12 @@ export function GmHome() {
       {tab === "prep" && (
       <>
       <SheetsSection lib={lib} setLib={setLib} characters={characters} selection={selection} />
-      <ProtectToggle />
-      <VisionSection characters={characters} settings={vision} />
-      <SettingsSection characters={characters} dpi={grid?.dpi ?? 150} />
-      {/* ---- Scena e griglia ---- */}
-      <div className="section">
-        <h2>Scena</h2>
-        {!sceneReady && <p className="muted">Nessuna scena aperta.</p>}
-        {grid && (
-          <>
-            <p>
-              Griglia: <b>{MEASUREMENT_LABEL[grid.measurement]}</b> · 1 casella = {grid.scale.multiplier}{" "}
-              {grid.scale.unit}
-            </p>
-            {grid.type !== "SQUARE" && <div className="notice">Il controller per ora supporta solo griglie quadrate.</div>}
-          </>
-        )}
-      </div>
-
-      {/* ---- Permessi ---- */}
-      <div className="section">
-        <h2>Permessi giocatori</h2>
-        {canUpdate ? (
-          <div className={`notice ${ownerOnly ? "" : "ok"}`}>
-            {ownerOnly
-              ? "I giocatori muovono solo i personaggi di cui sono proprietari: usa “Rendi proprietario” su ogni PG."
-              : "I giocatori possono muovere i personaggi. Il controller mostra a ciascuno solo il proprio."}
-          </div>
-        ) : (
-          <div className="notice err">
-            I giocatori non possono muovere i personaggi. In Owlbear: menu stanza → Permissions → Character → Update.
-          </div>
-        )}
-      </div>
+      <SettingsSection characters={characters} dpi={grid?.dpi ?? 150} vision={vision} />
+      {!canUpdate && (
+        <div className="notice err">
+          I giocatori non possono muovere i personaggi. In Owlbear: menu stanza → Permissions → Character → Update.
+        </div>
+      )}
 
       {/* ---- Personaggi ---- */}
       <div className="section">
@@ -122,9 +94,6 @@ export function GmHome() {
         {characters.map((item) => (
           <CharacterRow key={item.id} item={item} players={players} ownerOnly={ownerOnly} lib={lib} />
         ))}
-        <p className="muted" style={{ marginTop: 6 }}>
-          Puoi assegnare anche dal menu del token (tasto destro / tocco prolungato).
-        </p>
       </div>
 
       {/* ---- Giocatori ---- */}
@@ -270,26 +239,3 @@ function CharacterRow({ item, players, ownerOnly, lib }: { item: Item; players: 
   );
 }
 
-function ProtectToggle() {
-  const [on, setOn] = useState(loadProtectHidden);
-  return (
-    <div className="section">
-      <h2>Token nascosti</h2>
-      <label className="toggle">
-        <input
-          type="checkbox"
-          checked={on}
-          onChange={(e) => {
-            saveProtectHidden(e.target.checked);
-            setOn(e.target.checked);
-          }}
-        />
-        Quando selezioni un token nascosto, annulla subito la selezione
-      </label>
-      <p className="muted small">
-        I giocatori vedono le selezioni del master (etichetta “GM”) anche sui token nascosti. Con questa opzione il token
-        resta in primo piano nel pannello; per spostarlo usa 🧭 Muovi.
-      </p>
-    </div>
-  );
-}

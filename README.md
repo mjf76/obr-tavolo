@@ -85,13 +85,13 @@ Formato dei file e campi: **docs/FORMATO-SCHEDE.md**. Esempi: `examples/`. Conve
 Serve l'estensione ufficiale **Dynamic Fog** attiva nella stanza, e una mappa con muri e porte già pronti.
 Non bisogna aprire niente sul TV: la nebbia la disegna Owlbear su ogni dispositivo.
 
-- **Master → Prep. → Visione dei PG**: con **"Imposta da sola la visione dei PG"** attivo, l'app dà a ogni PG la sua luce di visione e la tiene aggiornata da sola.
+- **Visione automatica** (attiva di default; si spegne in Prep. → ⚙️ Impostazioni): l'app dà a ogni PG la sua luce di visione e la tiene aggiornata da sola.
   - **Mappa buia**: il PG vede fin dove arriva la più ampia tra la scurovisione e la luce che porta. La scurovisione si legge dai `sensi` della scheda, per esempio "Scurovisione 18 m". Senza nessuna delle due vede solo la casella attorno.
   - **Mappa illuminata**: il PG vede lontano (120 caselle). Il limite lo fanno muri e porte.
   - L'interruttore buia/illuminata c'è anche nella scheda **Partita**, per cambiare al volo (si entra in una grotta, si esce al sole).
 - **Giocatore → Esplorazione → Luce portata**: Nessuna, Candela 3 m, Torcia 12 m, Incantesimo Luce 12 m, Lanterna schermata 18 m, Lanterna a occhio di bue 36 m a cono. I valori sono luce intensa più luce fioca, regole 2024.
 - **Luci della mappa** (torce, bracieri, finestre) vanno impostate in Dynamic Fog come luci **secondarie**: si accendono per i giocatori quando un PG le ha in linea di vista.
-- **Mostri**: non devono avere luci *primarie*, altrimenti i giocatori vedono ciò che vede il mostro. Se ne trova, la sezione lo segnala e offre **Rendile secondarie**.
+- **Mostri**: non devono avere luci *primarie*, altrimenti i giocatori vedono ciò che vede il mostro. Se ne trova, la sezione Nebbia lo segnala e offre **Rendila secondaria**.
 - Il TV e i telefoni vedono l'unione di ciò che vedono tutti i PG.
 - **Muri e porte nel movimento**: la pulsantiera non fa attraversare muri e porte chiuse, nemmeno tagliando un angolo in diagonale. Il token resta fermo e il telefono vibra. Se un token è fuori asse, al passo successivo torna da solo al centro della casella.
 - **Nebbia (master → Partita)**: nella stessa riga del titolo c'è il pulsante **🌑 Buia / ☀️ Illuminata**; toccandolo si passa dall'una all'altra. Sotto c'è la riga **Porte**, con un pulsante numerato per ogni porta: verde se è aperta, rosso se è chiusa, e toccandolo la apri o la chiudi. Accanto ai numeri compare **✕ tutte** quando c'è almeno una porta aperta. Gli stessi numeri compaiono sulla mappa del master, sopra le porte; i giocatori e il TV non li vedono. Si possono spegnere in ⚙️ Impostazioni.
