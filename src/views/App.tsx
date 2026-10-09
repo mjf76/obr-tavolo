@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import OBR from "@owlbear-rodeo/sdk";
 import { useMe, useObrReady } from "../shared/hooks";
 import { effectiveRole, loadDeviceMode, saveDeviceMode, type DeviceMode } from "../shared/device";
@@ -9,7 +9,7 @@ import { TableHome } from "./TableHome";
 export function App() {
   const ready = useObrReady();
   if (!OBR.isAvailable) return <NotInObr />;
-  if (!ready) return <div className="app muted">Connessione a Owlbear Rodeo…</div>;
+  if (!ready) return <Connecting />;
   return <Main />;
 }
 
@@ -70,6 +70,24 @@ function NotInObr() {
           <code style={{ wordBreak: "break-all" }}>{manifest}</code>
         </p>
       </div>
+    </div>
+  );
+}
+
+function Connecting() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="app">
+      <p className="muted">Connessione a Owlbear Rodeo…</p>
+      {slow && (
+        <div className="notice">
+          Ci sta mettendo troppo. Chiudi e riapri l'estensione; se non basta, ricarica la pagina di Owlbear.
+        </div>
+      )}
     </div>
   );
 }

@@ -7,7 +7,20 @@ import { parseScale, type Measurement, type Scale } from "./movement";
 export function useObrReady(): boolean {
   const [ready, setReady] = useState(OBR.isReady);
   useEffect(() => {
-    if (OBR.isAvailable && !OBR.isReady) OBR.onReady(() => setReady(true));
+    if (!OBR.isAvailable) return;
+    // Owlbear può diventare pronto fra il primo render e questo effetto:
+    // si registra comunque l'ascolto e si ricontrolla lo stato a intervalli.
+    let done = false;
+    const mark = () => {
+      if (!done) {
+        done = true;
+        setReady(true);
+      }
+    };
+    OBR.onReady(mark);
+    if (OBR.isReady) mark();
+    const t = setInterval(() => OBR.isReady && mark(), 250);
+    return () => clearInterval(t);
   }, []);
   return ready;
 }
@@ -88,7 +101,18 @@ export function useGrid(sceneReady: boolean): GridInfo | null {
         OBR.scene.grid.getScale(),
         OBR.scene.grid.getType(),
       ]);
-      setGrid({ dpi, measurement, scale: scale.parsed ?? parseScale(scale.raw), type });
+      const fromRaw = parseScale(scale.raw ?? "");
+      const parsed = scale.parsed;
+      setGrid({
+        dpi,
+        measurement,
+        type,
+        scale: {
+          multiplier: parsed?.multiplier || fromRaw.multiplier || 5,
+          unit: parsed?.unit || fromRaw.unit || "ft",
+          digits: parsed?.digits ?? 0,
+        },
+      });
     };
     load();
     return OBR.scene.grid.onChange(() => void load());
