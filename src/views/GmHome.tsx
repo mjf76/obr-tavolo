@@ -20,9 +20,9 @@ import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
 import { realign } from "../shared/walls";
-import { DoorsSection } from "./gm/DoorsSection";
+import { FogSection } from "./gm/FogSection";
 import { SettingsSection } from "./gm/SettingsSection";
-import { AmbientSwitch, useVisionSettings, VisionSection } from "./gm/VisionSection";
+import { useVisionSettings, VisionSection } from "./gm/VisionSection";
 import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
 export function GmHome() {
@@ -64,7 +64,6 @@ export function GmHome() {
 
       {tab === "partita" && (
         <>
-          <AmbientSwitch settings={vision} />
           {selection.length === 1 && <SelectedCard item={selection[0]} publicRolls={publicRolls} />}
           {selection.length === 1 && readSheet(selection[0])?.tipo === "mostro" && (
             <label className="muted toggle">
@@ -72,24 +71,8 @@ export function GmHome() {
               mostri visibili a TV e giocatori
             </label>
           )}
-          <div className="row-btns">
-            {table && (
-              <button className="small" onClick={() => askTvFit()}>
-                📺 Reinquadra la mappa sul TV
-              </button>
-            )}
-            <button
-              className="small"
-              onClick={async () => {
-                const n = await realign(characters);
-                await OBR.notification.show(n ? `Riallineati ${n} token alla griglia` : "Tutti i token sono già allineati", "INFO");
-              }}
-            >
-              📐 Riallinea tutti i token
-            </button>
-          </div>
-          <DoorsSection sceneReady={sceneReady} />
-          <CombatList characters={characters} />
+          <FogSection sceneReady={sceneReady} settings={vision} />
+          <CombatList characters={characters} table={!!table} />
         </>
       )}
 
@@ -178,11 +161,28 @@ export function GmHome() {
 }
 
 /** Elenco rapido in partita: PF di tutti i personaggi della scena. */
-function CombatList({ characters }: { characters: Item[] }) {
+function CombatList({ characters, table }: { characters: Item[]; table: boolean }) {
   if (!characters.length) return null;
   return (
     <div className="section">
-      <h2>In scena</h2>
+      <div className="sec-head">
+        <h2 className="grow">In scena</h2>
+        {table && (
+          <button className="small icon-btn" onClick={() => askTvFit()} title="Reinquadra la mappa sul TV">
+            📺
+          </button>
+        )}
+        <button
+          className="small icon-btn"
+          title="Riallinea tutti i token alla griglia"
+          onClick={async () => {
+            const n = await realign(characters);
+            await OBR.notification.show(n ? `Riallineati ${n} token alla griglia` : "Tutti i token sono già allineati", "INFO");
+          }}
+        >
+          📐
+        </button>
+      </div>
       {characters.map((c) => {
         const v = readVitals(c);
         const sh = readSheet(c);

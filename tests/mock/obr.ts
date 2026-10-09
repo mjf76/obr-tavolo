@@ -17,7 +17,9 @@ if (q.get("sheet") !== "no") k.metadata["it.mjf.obr-tavolo/sheet"] = q.get("pg")
 const gob: any = tok("t4", "Goblin guerriero 2", 600); gob.visible = false;
 gob.metadata["it.mjf.obr-tavolo/sheet"] = { tipo: "mostro", versione: 1, id: "goblin-warrior", nome: "Goblin guerriero", ca: 15, pf: 10, velocita: "9 m", caratteristiche: { for: 8, des: 15, cos: 10, int: 10, sag: 8, car: 8 }, sezioni: [] };
 const gob2: any = structuredClone(gob); gob2.id = "t5"; gob2.name = "Goblin guerriero"; gob2.position = { x: 750, y: 300 };
-let items: any[] = [k, gob, gob2, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
+const door = (id: string, x: number, open: boolean) => ({ id, name: "Door", type: "PATH", layer: "FOG", visible: true, position: { x, y: 150 }, rotation: 0, scale: { x: 1, y: 1 },
+  commands: [[0, 0, 0], [1, 0, 300]], metadata: { "rodeo.owlbear.dynamic-fog/doors": [{ open, start: { distance: 0, index: 0 }, end: { distance: 300, index: 0 } }] } });
+let items: any[] = [k, gob, gob2, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"]), door("d1", 900, true), door("d2", 1200, false), door("d3", 1500, false)];
 const subs: ((i: any[]) => void)[] = [];
 const msubs: ((m: any) => void)[] = [];
 let meta: any = q.get("combat") ? { "it.mjf.obr-tavolo/combat": { active: true, entries: [
@@ -44,8 +46,8 @@ const OBR: any = {
     grid: { getDpi: async () => 150, getMeasurement: async () => q.get("meas") ?? "ALTERNATING",
       getScale: async () => ({ raw: "5ft", parsed: { multiplier: 5, unit: "ft", digits: 0 } }), getType: async () => "SQUARE",
       onChange: noop, setMeasurement: ok },
-    local: { addItems: ok, deleteItems: ok } },
-  room: { getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
+    local: { addItems: ok, deleteItems: ok, getItems: async () => [] } },
+  room: { getMetadata: async () => ({}), setMetadata: ok, onMetadataChange: noop, getPermissions: async () => (q.get("perms") ?? "CHARACTER_UPDATE").split(","), onPermissionsChange: noop },
   broadcast: { sendMessage: ok, onMessage: noop },
   modal: { open: async (m: any) => { location.href = m.url; }, close: ok },
   action: { close: ok }, popover: { open: ok, close: ok, setHeight: ok }, notification: { show: async (m: string) => console.log("NOTIFICA", m) },
@@ -58,3 +60,10 @@ export const buildShape = () => {
   const b: any = new Proxy({}, { get: (_t, k) => (k === "build" ? () => ({}) : () => b) });
   return b;
 };
+
+export const buildLabel = buildShape;
+export const isWall = (i: any) => i.type === "WALL";
+export const isPath = (i: any) => i.type === "PATH";
+export const isCurve = (i: any) => i.type === "CURVE";
+export const isLine = (i: any) => i.type === "LINE";
+export const isShape = (i: any) => i.type === "SHAPE";

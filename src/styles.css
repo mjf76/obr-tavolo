@@ -294,3 +294,8 @@ body.page-gm { background: var(--bg); }
 .door-num { min-width: 42px; height: 38px; font-weight: 800; font-size: 16px; padding: 0 8px; color: #fff; }
 .door-num.open { background: #2e7d32; border-color: #2e7d32; }
 .door-num.closed { background: #c62828; border-color: #c62828; }
+.sec-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.sec-head h2 { margin: 0; }
+.icon-btn { padding: 4px 8px; min-width: 34px; }
+.door-line { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.door-line .door-num { min-width: 34px; height: 32px; font-size: 14px; }

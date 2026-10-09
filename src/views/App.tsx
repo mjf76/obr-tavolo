@@ -29,6 +29,11 @@ function Main() {
     <div className="app">
       <h1>
         <span style={{ flex: 1 }}>OBR Tavolo</span>
+        {role === "GM" && (
+          <button className="small icon-btn" onClick={() => openGmPanel(0.5)} title="Pannello a metà schermo (mappa sopra)">
+            📱
+          </button>
+        )}
         <span className={`badge ${role === "GM" ? "gm" : role === "TAVOLO" ? "tavolo" : ""}`}>
           {role === "GM" ? "Master" : role === "TAVOLO" ? "Schermo tavolo" : "Giocatore"}
         </span>
@@ -109,9 +114,5 @@ function GmLauncher() {
       if (w < 1000) void openGmPanel(0.5);
     });
   }, []);
-  return (
-    <button className="block" onClick={() => openGmPanel(0.5)}>
-      📱 Pannello a metà schermo (mappa sopra)
-    </button>
-  );
+  return null;
 }
