@@ -1,4 +1,5 @@
 /** Valori derivati della scheda 5.5 (logica pura, testabile). */
+import { simplify } from "./dice.ts";
 import { ABILITIES, SKILLS, type Ability, type Attack, type PgSheet, type SkillId } from "./types.ts";
 
 export const mod = (score: number) => Math.floor((score - 10) / 2);
@@ -45,7 +46,7 @@ export function attackDamage(s: PgSheet, a: Attack): { expr: string; tipo: strin
   const m = mod(s.caratteristiche[a.car]);
   return a.danni.map((d, i) => {
     const add = d.aggiungiMod ?? i === 0;
-    const expr = add && m !== 0 ? `${d.dadi}${m > 0 ? "+" : "-"}${Math.abs(m)}` : d.dadi;
+    const expr = simplify(add && m !== 0 ? `${d.dadi}${m > 0 ? "+" : "-"}${Math.abs(m)}` : d.dadi);
     return { expr, tipo: d.tipo };
   });
 }

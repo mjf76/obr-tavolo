@@ -120,3 +120,16 @@ export function roll(expr: string, mode: Mode = "normale", rng: Rng = defaultRng
 export const fmtMod = (n: number) => (n >= 0 ? `+${n}` : `−${Math.abs(n)}`);
 /** Espressione d20 con modificatore: "1d20+5" */
 export const d20 = (mod: number) => (mod >= 0 ? `1d20+${mod}` : `1d20-${Math.abs(mod)}`);
+
+/** Somma le costanti: "1d6+2+3" → "1d6+5". */
+export function simplify(expr: string): string {
+  const terms = parse(expr);
+  if (!terms) return expr;
+  let k = 0;
+  const dice: string[] = [];
+  for (const t of terms) {
+    if (t.value !== undefined) k += t.sign * t.value;
+    else dice.push(`${t.sign < 0 ? "-" : dice.length ? "+" : ""}${t.count}d${t.sides}`);
+  }
+  return `${dice.join("")}${k > 0 ? `+${k}` : k < 0 ? `-${-k}` : ""}` || "0";
+}

@@ -12,7 +12,7 @@ Stato: **v0.3.0**: assegnazione dei PG, app del giocatore, **schede 5.5 da JSON*
 |---|---|
 | **Master** (ruolo GM in OBR) | Stato della griglia (con pulsante "Imposta 5-10-5"), permessi della stanza, elenco dei personaggi con assegnazione a giocatore, giocatori connessi, avviso se lo schermo TAVOLO è entrato come GM |
 | **Giocatore** | Il proprio personaggio e il pulsante **Apri il mio personaggio**, che apre l'app a schermo intero (vedi sotto) |
-| **TAVOLO** (giocatore chiamato `TAVOLO`, o forzato in "Questo dispositivo") | Per ora solo un segnaposto: la modalità TV arriva allo Step 3 |
+| **TAVOLO** (giocatore chiamato `TAVOLO`, o forzato in "Questo dispositivo") | Vista fissa su **tutta la mappa**, riadattata quando cambia la mappa o la finestra; il master può reinquadrarla dalla scheda Partita. Riceve le notifiche dei tiri |
 
 **App del giocatore** (schermo intero sul telefono): home con ritratto del PG, PF (con barra), CA e condizioni; in basso quattro pulsanti che aprono un popup chiudibile con la X:
 

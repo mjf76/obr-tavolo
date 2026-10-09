@@ -16,6 +16,7 @@ import { readSheet } from "../sheet/store";
 import { readVitals } from "../shared/vitals";
 import { PgSelect, SheetsSection } from "./gm/SheetsSection";
 import { SelectedCard } from "./gm/StatBlock";
+import { askTvFit } from "../shared/tv";
 
 /** Token selezionati dal master (aggiornati in tempo reale). */
 function useSelection(sceneReady: boolean, all: Item[]): Item[] {
@@ -68,6 +69,11 @@ export function GmHome() {
             </label>
           )}
           {selection.length !== 1 && <p className="muted">Seleziona un token per vederne scheda e PF.</p>}
+          {table && (
+            <button className="small" onClick={() => askTvFit()}>
+              📺 Reinquadra la mappa sul TV
+            </button>
+          )}
           <CombatList characters={characters} />
         </>
       )}

@@ -262,7 +262,16 @@ export function SpellSection({ onlyPrepared = false, filter }: { onlyPrepared?: 
 
   const cast = async (spell: Spell, asRitual = false) => {
     let slotNote = "";
-    if (spell.livello > 0 && !asRitual) {
+    const res = spell.risorsa ? sheet.risorse?.find((r) => r.id === spell.risorsa) : undefined;
+    if (res && !asRitual) {
+      const usedRes = st.risorseUsate[res.id] ?? 0;
+      if (usedRes >= res.max) {
+        setMsg(`${res.nome}: nessun uso rimasto.`);
+        return;
+      }
+      await mutate(item.id, (_v, s) => ({ s: { ...s, risorseUsate: { ...s.risorseUsate, [res.id]: (s.risorseUsate[res.id] ?? 0) + 1 } } }));
+      slotNote = `${res.nome}, senza slot`;
+    } else if (spell.livello > 0 && !asRitual) {
       // primo slot libero dal livello dell'incantesimo in su (poi lo slot del patto)
       let lvl = 0;
       for (let l = spell.livello; l <= sp.slot.length; l++) if ((sp.slot[l - 1] ?? 0) - used(l) > 0) { lvl = l; break; }

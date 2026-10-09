@@ -1,11 +1,16 @@
+import { fitWholeMap } from "../shared/tv";
+
 export function TableHome() {
   return (
     <div className="section">
       <h2>Schermo del tavolo</h2>
-      <p>Questo dispositivo mostra la mappa a tutti: nessun controllo qui.</p>
-      <p className="muted">
-        In arrivo (Step 3): la vista seguirà il personaggio di turno o la vista del master e mostrerà turno, round
-        ed esiti dei tiri.
+      <p>La vista inquadra sempre tutta la mappa della scena e si riadatta quando il master cambia mappa.</p>
+      <button className="primary block" onClick={() => fitWholeMap()}>
+        📺 Inquadra la mappa ora
+      </button>
+      <p className="muted" style={{ marginTop: 8 }}>
+        Se hai appena scelto “Schermo TV” in questo dispositivo, ricarica la pagina di Owlbear per attivare l'inquadratura
+        automatica.
       </p>
     </div>
   );

@@ -8,6 +8,7 @@ import { isCharacter, rebindByName } from "../shared/assignment";
 import { IDS, KEYS, pageUrl } from "../shared/keys";
 import { effectiveRole, loadDeviceMode } from "../shared/device";
 import { ROLL_CHANNEL, rollText, type RollMessage } from "../sheet/rolls";
+import { startTvMode } from "../shared/tv";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -31,6 +32,12 @@ OBR.onReady(async () => {
     if (m.secret && app !== "GM") return;
     await OBR.notification.show(rollText(m), m.crit ? "SUCCESS" : m.fumble ? "WARNING" : "DEFAULT");
   });
+
+  // Schermo TAVOLO: vista fissa su tutta la mappa.
+  {
+    const [role, name] = await Promise.all([OBR.player.getRole(), OBR.player.getName()]);
+    if (effectiveRole(role, name, loadDeviceMode()) === "TAVOLO") startTvMode();
+  }
 
   if ((await OBR.player.getRole()) !== "GM") return;
 

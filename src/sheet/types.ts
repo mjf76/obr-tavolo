@@ -92,6 +92,8 @@ export interface Spell {
   danni?: string; // es. "1d10" o "3d6"
   tipoDanni?: string;
   sintesi?: string;
+  /** id di una risorsa: il lancio consuma un suo uso invece di uno slot (es. Nemico prescelto) */
+  risorsa?: string;
 }
 
 export interface Resource {
