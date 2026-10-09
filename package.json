@@ -1,6 +1,6 @@
 {
   "name": "obr-tavolo",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Controller da telefono per Owlbear Rodeo — D&D 5.5 in presenza",
   "scripts": {
     "dev": "vite",

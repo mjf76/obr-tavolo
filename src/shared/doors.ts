@@ -127,7 +127,7 @@ export async function syncDoorLabels(force = false) {
         .backgroundColor(d.open ? "#2e7d32" : "#c62828")
         .backgroundOpacity(0.9)
         .pointerHeight(0)
-        .layer("TEXT")
+        .layer("POINTER") // sopra la nebbia, così si legge anche nelle zone non ancora viste
         .locked(true)
         .disableHit(true)
         .metadata({ [LABEL_KEY]: true })
