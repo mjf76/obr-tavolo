@@ -4,6 +4,7 @@ import { readPg } from "../../sheet/store";
 import { mutate, readState } from "../../shared/vitals";
 import { AbilityGrid, HitDice, longRestState, ModeBar, shortRestState, SkillList, SpellSection } from "../sheet/parts";
 import { Popup } from "./PlayerApp";
+import { LUCI } from "../../shared/vision";
 
 type View = "menu" | "breve" | "prove" | "rituali";
 
@@ -62,6 +63,25 @@ export function ExplorePanel({ item, onClose }: { item: Item; onClose: () => voi
             onClick={() => setView("rituali")}
             disabled={!sheet?.incantesimi?.lista.some((x) => x.rituale)}
           />
+          <div className="card action-card">
+            <span className="action-icon">🔦</span>
+            <div className="grow">
+              <b>Luce portata</b>
+              <div className="muted">Nei luoghi bui decide quanto lontano vedi sulla mappa (insieme alla scurovisione).</div>
+              <select
+                value={s.luce ?? ""}
+                onChange={(e) => mutate(item.id, (_v, st) => ({ s: { ...st, luce: e.target.value } }))}
+                style={{ marginTop: 6, width: "100%" }}
+              >
+                {LUCI.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.label}
+                    {l.ft ? ` (${Math.round(l.ft * 0.3 * 10) / 10} m)` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <ActionCard
             icon="🧹"
             title="Pulisci condizioni"

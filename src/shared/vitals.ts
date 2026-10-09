@@ -28,6 +28,8 @@ export interface CharState {
   /** Dadi Vita spesi per taglia (es. { "10": 1 }) */
   dadiVitaUsati: Record<string, number>;
   ispirazione: boolean;
+  /** fonte di luce portata (id di LUCI in vision.ts) */
+  luce?: string;
 }
 
 export const EMPTY_STATE: CharState = {

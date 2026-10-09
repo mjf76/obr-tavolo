@@ -28,7 +28,7 @@ Gli esempi completi sono in `examples/` (`pg-esempio-guerriero.json`, `pg-esempi
 | `privilegi` | | `[{ "nome": "...", "fonte": "Guerriero 2", "sintesi": "..." }]` |
 | `inventario` | | `[{ "nome": "Corda", "qta": 1, "equip": false, "sintonia": false }]` |
 | `monete` | | `{ "mr": 0, "ma": 0, "me": 0, "mo": 10, "mp": 0 }` |
-| `sensi`, `linguaggi` | | array di testo |
+| `sensi`, `linguaggi` | | array di testo; da `sensi` si legge la scurovisione per la nebbia dinamica ("Scurovisione 18 m" oppure "Darkvision 60 ft") |
 | `competenze` | | `{ "armature": [], "armi": [], "strumenti": [] }` |
 | `note` | | testo libero |
 

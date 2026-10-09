@@ -19,6 +19,7 @@ import { SelectedCard } from "./gm/StatBlock";
 import { askTvFit } from "../shared/tv";
 import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
+import { AmbientSwitch, useVisionSettings, VisionSection } from "./gm/VisionSection";
 import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
 export function GmHome() {
@@ -42,6 +43,7 @@ export function GmHome() {
   const selection = useFocus(sceneReady, characters);
   useFocusHighlight(selection);
   const [publicRolls, setPublicRolls] = useState(false);
+  const vision = useVisionSettings(sceneReady);
 
   return (
     <>
@@ -59,6 +61,7 @@ export function GmHome() {
 
       {tab === "partita" && (
         <>
+          <AmbientSwitch settings={vision} />
           {selection.length === 1 && <SelectedCard item={selection[0]} publicRolls={publicRolls} />}
           {selection.length === 1 && readSheet(selection[0])?.tipo === "mostro" && (
             <label className="muted toggle">
@@ -82,6 +85,7 @@ export function GmHome() {
       <>
       <SheetsSection lib={lib} setLib={setLib} characters={characters} selection={selection} />
       <ProtectToggle />
+      <VisionSection characters={characters} settings={vision} />
       {/* ---- Scena e griglia ---- */}
       <div className="section">
         <h2>Scena</h2>

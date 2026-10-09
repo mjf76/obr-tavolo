@@ -14,7 +14,7 @@ const PROD_BASE = new URL(PROD_SITE + "/").pathname; // es. "/obr-tavolo/"
 function manifest(site: string) {
   return {
     name: "OBR Tavolo",
-    version: "0.4.4",
+    version: "0.5.0",
     manifest_version: 1,
     description: "Controller da telefono per giocare in presenza: PG, movimento, schede D&D 5.5",
     author: "Michael Fargion",

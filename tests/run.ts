@@ -5,6 +5,7 @@ import { parse, roll, doubleDice } from "../src/sheet/dice.ts";
 import { attackBonus, attackDamage, initiative, passivePerception, profBonus, saveBonus, skillBonus, spellDC, validatePg } from "../src/sheet/derive.ts";
 import type { PgSheet } from "../src/sheet/types.ts";
 import { readFileSync } from "node:fs";
+import { lightFor, parseDarkvisionFt } from "../src/shared/visionRules.ts";
 import { formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
 
 const D: Step = { dx: 1, dy: 1 };
@@ -46,6 +47,14 @@ const cases: [string, () => void][] = [
   ["cura: non oltre il massimo", () => assert.equal(applyHeal({ hp: 8, maxHp: 10, tempHp: 0, ac: 10 }, 9).hp, 10)],
   ["PF temp: non si sommano, vince il più alto", () =>
     assert.equal(applyTempHp({ hp: 8, maxHp: 10, tempHp: 6, ac: 10 }, 4).tempHp, 6)],
+  ["scurovisione in metri", () => assert.equal(parseDarkvisionFt("Scurovisione 18 m"), 60)],
+  ["scurovisione in piedi", () => assert.equal(parseDarkvisionFt("Darkvision 120 ft., Passive Perception 12"), 120)],
+  ["nessuna scurovisione", () => assert.equal(parseDarkvisionFt("Nessuna scurovisione"), 0)],
+  ["buio: scurovisione 60 ft = 12 caselle", () => assert.equal(lightFor(60, "", "buio", 150).attenuationRadius, 12 * 150 + 75)],
+  ["buio: torcia batte niente scurovisione", () => assert.equal(lightFor(0, "torcia", "buio", 100).attenuationRadius, 8 * 100 + 50)],
+  ["buio: senza nulla, una casella", () => assert.equal(lightFor(0, "", "buio", 100).attenuationRadius, 150)],
+  ["occhio di bue: cono", () => assert.equal(lightFor(60, "occhiodibue", "buio", 100).outerAngle, 60)],
+  ["illuminata: raggio ampio, cerchio", () => assert.equal(lightFor(0, "occhiodibue", "luce", 100).outerAngle, 360)],
 ];
 
 let fail = 0;

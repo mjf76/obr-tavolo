@@ -9,7 +9,8 @@ import { IDS, KEYS, pageUrl } from "../shared/keys";
 import { effectiveRole, loadDeviceMode } from "../shared/device";
 import { ROLL_CHANNEL, rollText, type RollMessage } from "../sheet/rolls";
 import { startTvMode } from "../shared/tv";
-import { INIT_CHANNEL, updateCombat, type InitMessage } from "../shared/combat";
+import { INIT_CHANNEL, isPcToken, updateCombat, type InitMessage } from "../shared/combat";
+import { syncVision } from "../shared/vision";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -70,10 +71,39 @@ OBR.onReady(async () => {
     }
   };
 
+  // Visione dei PG per la nebbia dinamica: si aggiorna da sola (scheda, luce portata, ambiente).
+  let visionBusy = false;
+  let visionAgain = false;
+  const vision = async () => {
+    if (visionBusy) return void (visionAgain = true);
+    visionBusy = true;
+    try {
+      if (!(await OBR.scene.isReady())) return;
+      const pcs = (await OBR.scene.items.getItems()).filter((i) => isCharacter(i) && isPcToken(i));
+      await syncVision(pcs);
+    } catch {
+      /* scena chiusa nel frattempo */
+    } finally {
+      visionBusy = false;
+      if (visionAgain) {
+        visionAgain = false;
+        void vision();
+      }
+    }
+  };
+  OBR.scene.items.onChange(() => void vision());
+  OBR.scene.onMetadataChange(() => void vision());
+  OBR.scene.grid.onChange(() => void vision());
+
   OBR.party.onChange((p) => {
     party = p;
     void sync();
   });
-  OBR.scene.onReadyChange((r) => r && void sync());
+  OBR.scene.onReadyChange((r) => {
+    if (!r) return;
+    void sync();
+    void vision();
+  });
   void sync();
+  void vision();
 });
