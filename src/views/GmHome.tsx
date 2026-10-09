@@ -89,7 +89,7 @@ export function GmHome() {
               📐 Riallinea tutti i token
             </button>
           </div>
-          <DoorsSection sceneReady={sceneReady} characters={characters} selection={selection} dpi={grid?.dpi ?? 150} />
+          <DoorsSection sceneReady={sceneReady} />
           <CombatList characters={characters} />
         </>
       )}

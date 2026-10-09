@@ -12,6 +12,7 @@ import { startTvMode } from "../shared/tv";
 import { INIT_CHANNEL, isPcToken, updateCombat, type InitMessage } from "../shared/combat";
 import { syncVision } from "../shared/vision";
 import { enforceMeasurement } from "../shared/settings";
+import { DOOR_NUMBERS_PREF, syncDoorLabels } from "../shared/doors";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -92,7 +93,13 @@ OBR.onReady(async () => {
       }
     }
   };
-  OBR.scene.items.onChange(() => void vision());
+  // numeri delle porte sulla mappa del master
+  const doorLabels = (force = false) => void syncDoorLabels(force).catch(() => undefined);
+  OBR.scene.items.onChange(() => {
+    void vision();
+    doorLabels();
+  });
+  window.addEventListener("storage", (e) => e.key === DOOR_NUMBERS_PREF && doorLabels(true));
   OBR.scene.onMetadataChange(() => void vision());
   OBR.scene.grid.onChange(() => {
     void vision();
@@ -109,7 +116,9 @@ OBR.onReady(async () => {
     void sync();
     void vision();
     void enforceMeasurement().catch(() => undefined);
+    doorLabels(true);
   });
+  doorLabels(true);
   void enforceMeasurement().catch(() => undefined);
   void sync();
   void vision();
