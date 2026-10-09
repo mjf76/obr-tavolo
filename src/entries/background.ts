@@ -11,6 +11,7 @@ import { ROLL_CHANNEL, rollText, type RollMessage } from "../sheet/rolls";
 import { startTvMode } from "../shared/tv";
 import { INIT_CHANNEL, isPcToken, updateCombat, type InitMessage } from "../shared/combat";
 import { syncVision } from "../shared/vision";
+import { enforceMeasurement } from "../shared/settings";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -93,7 +94,11 @@ OBR.onReady(async () => {
   };
   OBR.scene.items.onChange(() => void vision());
   OBR.scene.onMetadataChange(() => void vision());
-  OBR.scene.grid.onChange(() => void vision());
+  OBR.scene.grid.onChange(() => {
+    void vision();
+    void enforceMeasurement().catch(() => undefined);
+  });
+  OBR.room.onMetadataChange(() => void enforceMeasurement().catch(() => undefined));
 
   OBR.party.onChange((p) => {
     party = p;
@@ -103,7 +108,9 @@ OBR.onReady(async () => {
     if (!r) return;
     void sync();
     void vision();
+    void enforceMeasurement().catch(() => undefined);
   });
+  void enforceMeasurement().catch(() => undefined);
   void sync();
   void vision();
 });

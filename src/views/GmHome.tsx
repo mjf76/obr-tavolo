@@ -21,6 +21,7 @@ import { useCombat } from "../shared/combat";
 import { EncounterTab } from "./gm/EncounterTab";
 import { realign } from "../shared/walls";
 import { DoorsSection } from "./gm/DoorsSection";
+import { SettingsSection } from "./gm/SettingsSection";
 import { AmbientSwitch, useVisionSettings, VisionSection } from "./gm/VisionSection";
 import { loadProtectHidden, saveProtectHidden, setFocus, useFocus, useFocusHighlight } from "../shared/focus";
 
@@ -100,6 +101,7 @@ export function GmHome() {
       <SheetsSection lib={lib} setLib={setLib} characters={characters} selection={selection} />
       <ProtectToggle />
       <VisionSection characters={characters} settings={vision} />
+      <SettingsSection characters={characters} dpi={grid?.dpi ?? 150} />
       {/* ---- Scena e griglia ---- */}
       <div className="section">
         <h2>Scena</h2>
@@ -110,14 +112,6 @@ export function GmHome() {
               Griglia: <b>{MEASUREMENT_LABEL[grid.measurement]}</b> · 1 casella = {grid.scale.multiplier}{" "}
               {grid.scale.unit}
             </p>
-            {grid.measurement !== "ALTERNATING" && (
-              <div className="notice">
-                Il movimento 5.5 al tavolo usa 5-10-5.{" "}
-                <button className="small" onClick={() => OBR.scene.grid.setMeasurement("ALTERNATING")}>
-                  Imposta 5-10-5
-                </button>
-              </div>
-            )}
             {grid.type !== "SQUARE" && <div className="notice">Il controller per ora supporta solo griglie quadrate.</div>}
           </>
         )}
