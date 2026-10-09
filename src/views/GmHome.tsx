@@ -17,6 +17,8 @@ import { readVitals } from "../shared/vitals";
 import { PgSelect, SheetsSection } from "./gm/SheetsSection";
 import { SelectedCard } from "./gm/StatBlock";
 import { askTvFit } from "../shared/tv";
+import { useCombat } from "../shared/combat";
+import { EncounterTab } from "./gm/EncounterTab";
 
 /** Token selezionati dal master (aggiornati in tempo reale). */
 function useSelection(sceneReady: boolean, all: Item[]): Item[] {
@@ -40,7 +42,8 @@ export function GmHome() {
   const canUpdate = perms.includes("CHARACTER_UPDATE");
   const ownerOnly = perms.includes("CHARACTER_OWNER_ONLY");
 
-  const [tab, setTab] = useState<"partita" | "prep">("partita");
+  const [tab, setTab] = useState<"partita" | "incontro" | "prep">("partita");
+  const combat = useCombat(sceneReady);
   const [lib, setLib] = useState<Library>({ pg: [], mostri: [] });
   useEffect(() => {
     loadLibrary().then(setLib);
@@ -54,8 +57,11 @@ export function GmHome() {
         <button className={tab === "partita" ? "on" : ""} onClick={() => setTab("partita")}>
           🎲 Partita
         </button>
+        <button className={tab === "incontro" ? "on" : ""} onClick={() => setTab("incontro")}>
+          ⚔️ Incontro{combat.active ? " •" : ""}
+        </button>
         <button className={tab === "prep" ? "on" : ""} onClick={() => setTab("prep")}>
-          🛠 Preparazione
+          🛠 Prep.
         </button>
       </div>
 
@@ -77,6 +83,8 @@ export function GmHome() {
           <CombatList characters={characters} />
         </>
       )}
+
+      {tab === "incontro" && <EncounterTab characters={characters} combat={combat} />}
 
       {tab === "prep" && (
       <>

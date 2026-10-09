@@ -9,6 +9,7 @@ import { IDS, KEYS, pageUrl } from "../shared/keys";
 import { effectiveRole, loadDeviceMode } from "../shared/device";
 import { ROLL_CHANNEL, rollText, type RollMessage } from "../sheet/rolls";
 import { startTvMode } from "../shared/tv";
+import { INIT_CHANNEL, updateCombat, type InitMessage } from "../shared/combat";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -40,6 +41,17 @@ OBR.onReady(async () => {
   }
 
   if ((await OBR.player.getRole()) !== "GM") return;
+
+  // Iniziativa tirata dai giocatori → elenco del combattimento (scritto solo dal master).
+  OBR.broadcast.onMessage(INIT_CHANNEL, async ({ data }) => {
+    const m = data as InitMessage;
+    if (typeof m?.value !== "number") return;
+    await updateCombat((c) =>
+      c.active
+        ? { ...c, entries: c.entries.map((e) => (e.id === m.itemId ? { ...e, init: m.value, detail: m.detail } : e)) }
+        : c,
+    );
+  });
 
   let party: Player[] = await OBR.party.getPlayers();
   let running = false;

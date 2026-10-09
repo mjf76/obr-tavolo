@@ -8,6 +8,7 @@ import { readSheet } from "../../sheet/store";
 import { ABILITIES, ABILITY_SHORT, type Monster } from "../../sheet/types";
 import { applyDamage, applyHeal, mutate, readVitals } from "../../shared/vitals";
 import { passivePerception, saveBonus } from "../../sheet/derive";
+import { IDS, pageUrl } from "../../shared/keys";
 
 export function SelectedCard({ item, publicRolls }: { item: Item; publicRolls: boolean }) {
   const sheet = readSheet(item);
@@ -25,6 +26,12 @@ export function SelectedCard({ item, publicRolls }: { item: Item; publicRolls: b
         )}
       </div>
       {v.maxHp > 0 && <QuickHp item={item} />}
+      <div className="row-btns">
+        <button onClick={() => openMoveFor(item.id)}>🧭 Muovi</button>
+        <button onClick={() => OBR.scene.items.updateItems([item.id], (it) => it.forEach((i) => (i.visible = !i.visible)))}>
+          {item.visible ? "🙈 Nascondi" : "👁 Rivela"}
+        </button>
+      </div>
       {sheet?.tipo === "mostro" && <StatBlock m={sheet} item={item} publicRolls={publicRolls} />}
       {sheet?.tipo === "pg" && (
         <p className="muted">
@@ -35,6 +42,17 @@ export function SelectedCard({ item, publicRolls }: { item: Item; publicRolls: b
       {!sheet && <p className="muted">Nessuna scheda collegata.</p>}
     </div>
   );
+}
+
+/** Apre la pulsantiera di movimento per un token qualsiasi (master). */
+export async function openMoveFor(itemId: string) {
+  await OBR.modal.open({
+    id: IDS.modalController,
+    url: pageUrl("controller.html", { item: itemId }),
+    fullScreen: true,
+    hidePaper: true,
+    hideBackdrop: true,
+  });
 }
 
 function QuickHp({ item }: { item: Item }) {
@@ -50,8 +68,12 @@ function QuickHp({ item }: { item: Item }) {
       await OBR.notification.show(String(e), "ERROR");
     }
   };
+  const step = (heal: boolean) =>
+    mutate(item.id, (cur) => ({ v: heal ? applyHeal(cur, 1) : applyDamage(cur, 1) })).catch(() => undefined);
   return (
     <div className="hp-input small-hp">
+      <button className="dmg" onClick={() => step(false)} aria-label="meno 1 PF">−1</button>
+      <button className="heal" onClick={() => step(true)} aria-label="più 1 PF">+1</button>
       <input inputMode="numeric" placeholder="PF" value={n} onChange={(e) => setN(e.target.value.replace(/\D/g, ""))} />
       <button className="dmg" disabled={!ok} onClick={() => go(false)}>
         Danno

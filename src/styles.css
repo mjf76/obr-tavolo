@@ -266,3 +266,16 @@ html:has(> body.page-player), html:has(> body.page-controller), html:has(> body.
 .ctrl-side button { padding: 12px 8px; }
 .ctrl-body .dpad { grid-template-columns: repeat(3, 54px); width: auto; }
 .ctrl-body .dpad button { padding: 0; min-width: 0; width: 54px; height: 54px; aspect-ratio: auto; }
+
+/* ---------- PF ± e iniziativa ---------- */
+.small-hp { grid-template-columns: auto auto 1fr 1fr 1fr; }
+.small-hp > button:nth-child(-n+2) { padding: 8px 10px; font-weight: 800; }
+button.pm { width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 22px; font-weight: 800; align-self: center; }
+.hp-line { align-items: center; }
+.init-list { display: flex; flex-direction: column; gap: 4px; }
+.init-row { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border-radius: 10px; padding: 6px 8px; border-left: 3px solid var(--ok); }
+.init-row.mostro { border-left-color: var(--err); }
+.init-rank { width: 22px; text-align: center; font-weight: 800; color: var(--muted); }
+.init-input { width: 56px; text-align: center; font-size: 18px; font-weight: 800; padding: 6px; }
+.init-banner { display: flex; align-items: center; gap: 10px; background: #3a1d1f; border: 1px solid var(--err); border-radius: 14px; padding: 10px 12px; width: 100%; max-width: 420px; }
+.init-banner.done { background: var(--panel); border-color: var(--line); }

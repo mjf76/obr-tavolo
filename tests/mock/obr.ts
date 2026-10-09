@@ -14,8 +14,14 @@ k.metadata["it.mjf.obr-tavolo/state"] = { conditions: ["poisoned", "prone"], exh
 import bran from "../../examples/pg-esempio-guerriero.json";
 import ilsa from "../../examples/pg-esempio-mago.json";
 if (q.get("sheet") !== "no") k.metadata["it.mjf.obr-tavolo/sheet"] = q.get("pg") === "mago" ? ilsa : bran;
-let items: any[] = [k, tok("t4", "Goblin guerriero 2", 600), tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
+const gob: any = tok("t4", "Goblin guerriero 2", 600); gob.visible = false;
+gob.metadata["it.mjf.obr-tavolo/sheet"] = { tipo: "mostro", versione: 1, id: "goblin-warrior", nome: "Goblin guerriero", ca: 15, pf: 10, velocita: "9 m", caratteristiche: { for: 8, des: 15, cos: 10, int: 10, sag: 8, car: 8 }, sezioni: [] };
+let items: any[] = [k, gob, tok("t2", "Roh Musk", 300), tok("t3", "Lupo di Anna", 450, ["p-anna", "Anna"])];
 const subs: ((i: any[]) => void)[] = [];
+const msubs: ((m: any) => void)[] = [];
+let meta: any = q.get("combat") ? { "it.mjf.obr-tavolo/combat": { active: true, entries: [
+  { id: "t1", name: "Kitiara", kind: "pg", bonus: 5, init: null },
+  { id: "t4", name: "Goblin guerriero 2", kind: "mostro", bonus: 2, init: 14, detail: "[12] + 2 = 14" } ] } } : {};
 const noop = () => () => {};
 const ok = async () => {};
 const OBR: any = {
@@ -28,6 +34,8 @@ const OBR: any = {
     { id: "p-tv", connectionId: "c3", role: "PLAYER", name: "TAVOLO", color: "#aaa", metadata: {} },
   ], onChange: noop },
   scene: { isReady: async () => true, onReadyChange: noop,
+    getMetadata: async () => meta, setMetadata: async (u: any) => { meta = { ...meta, ...u }; msubs.forEach((f) => f(meta)); },
+    onMetadataChange: (cb: any) => { msubs.push(cb); return () => {}; },
     items: { getItems: async (ids?: string[]) => (ids ? items.filter((i) => ids.includes(i.id)) : items),
       onChange: (cb: any) => { subs.push(cb); return () => {}; },
       updateItems: async (ids: string[], fn: (d: any[]) => void) => { const d = structuredClone(items.filter((i) => ids.includes(i.id))); fn(d);

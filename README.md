@@ -61,6 +61,25 @@ Formato dei file e campi: **docs/FORMATO-SCHEDE.md**. Esempi: `examples/`. Conve
 
 ---
 
+## Incontro e iniziativa (v0.4)
+
+- **Master → ⚔️ Incontro**:
+  - **Mostri in scena**: ogni mostro ha il suo pulsante visibile/nascosto; ci sono anche **Rivela tutti** e **Nascondi tutti**. I mostri nascosti non si vedono sui telefoni né sul TV.
+  - **Avvia combattimento**: PG e mostri entrano in un unico elenco ordinato per iniziativa.
+    - I giocatori trovano nella home il pulsante **🎲 Tira l'iniziativa** con il loro bonus.
+    - **Tira per i mostri** usa d20 + Destrezza, con tiro segreto.
+    - Ogni valore si può correggere o scrivere a mano.
+  - **Aggiorna partecipanti** aggiunge i token nuovi e toglie quelli rimossi; **Termina combattimento** chiude l'elenco.
+  - L'avanzamento dei turni resta al tavolo.
+- **Master → Partita, token selezionato**:
+  - **🧭 Muovi** apre la pulsantiera anche per i mostri;
+  - **Nascondi/Rivela**;
+  - **−1 / +1** PF e Danno/Cura;
+  - blocco statistiche con tiri cliccabili.
+- **Giocatore → Combattimento → Stato**: pulsanti **−** e **+** accanto ai PF. Il − scala prima i PF temporanei.
+
+---
+
 ## Installazione in Owlbear Rodeo
 
 1. Pubblica il sito (vedi *Pubblicazione*), poi in Owlbear Rodeo: **Profilo → Extensions → Add Custom Extension**

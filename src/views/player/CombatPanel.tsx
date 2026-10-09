@@ -76,7 +76,13 @@ function StatusTab({ item }: { item: Item }) {
       {/* PF */}
       <div className="card">
         <div className="hp-line">
+          <button className="pm dmg" onClick={() => safe(() => mutate(item.id, (cur) => ({ v: applyDamage(cur, 1) })))} aria-label="meno 1 PF">
+            −
+          </button>
           <span className="hp-big">{v.hp}</span>
+          <button className="pm heal" onClick={() => safe(() => mutate(item.id, (cur) => ({ v: applyHeal(cur, 1) })))} aria-label="più 1 PF">
+            +
+          </button>
           <span className="muted">/ {v.maxHp} PF</span>
           {v.tempHp > 0 && <span className="temp">+{v.tempHp} temp</span>}
           <span style={{ flex: 1 }} />

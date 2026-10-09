@@ -16,7 +16,9 @@ import { SheetPanel } from "./SheetPanel";
 import { SheetCtx } from "../sheet/parts";
 import { readPg } from "../../sheet/store";
 import { onLocalRoll, type RollMessage } from "../../sheet/rolls";
-import type { Mode } from "../../sheet/dice";
+import { d20, fmtMod, type Mode } from "../../sheet/dice";
+import { rollAndShare } from "../../sheet/rolls";
+import { sendInitiative, useCombat, type CombatEntry } from "../../shared/combat";
 
 export type Panel = "home" | "move" | "combat" | "explore" | "sheet";
 
@@ -33,6 +35,8 @@ export function PlayerApp() {
   const item = mine.find((i) => i.id === selectedId) ?? mine[0];
   const sheet = readPg(item);
   const [mode, setMode] = useState<Mode>("normale");
+  const combat = useCombat(sceneReady);
+  const myEntry = item && combat.active ? combat.entries.find((e) => e.id === item.id) : undefined;
 
   const closeApp = () => OBR.modal.close(IDS.modalPlayer);
   const openMove = (from: Panel) => {
@@ -70,6 +74,7 @@ export function PlayerApp() {
             </div>
           )}
           <Hero item={item} />
+          {myEntry && <InitBanner item={item} entry={myEntry} />}
         </>
       )}
 
@@ -93,6 +98,38 @@ export function PlayerApp() {
     <SheetCtx.Provider value={{ sheet, item, mode, setMode }}>{content}</SheetCtx.Provider>
   ) : (
     content
+  );
+}
+
+/** Combattimento avviato dal master: tira l'iniziativa (o mostra il valore registrato). */
+function InitBanner({ item, entry }: { item: Item; entry: CombatEntry }) {
+  const [busy, setBusy] = useState(false);
+  if (entry.init !== null) {
+    return (
+      <div className="init-banner done">
+        <span>⚔️</span>
+        <span className="grow">Iniziativa registrata</span>
+        <b style={{ fontSize: 22 }}>{entry.init}</b>
+      </div>
+    );
+  }
+  const go = async () => {
+    setBusy(true);
+    try {
+      const r = await rollAndShare(entry.name || item.name, "Iniziativa", d20(entry.bonus));
+      if (r) await sendInitiative({ itemId: item.id, value: r.total, detail: r.detail });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="init-banner">
+      <span>⚔️</span>
+      <span className="grow">Combattimento! Tira l'iniziativa</span>
+      <button className="primary" onClick={go} disabled={busy}>
+        🎲 {fmtMod(entry.bonus)}
+      </button>
+    </div>
   );
 }
 

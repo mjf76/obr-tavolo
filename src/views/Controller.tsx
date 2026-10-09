@@ -4,7 +4,17 @@ import { isCharacter, tokensOf } from "../shared/assignment";
 import { useGrid, useItems, useMe, useObrReady, useSceneReady } from "../shared/hooks";
 import { IDS } from "../shared/keys";
 import { formatDistance, nextDiagonalCost, pathCost, type Dir, type Step } from "../shared/movement";
-import { readPg } from "../sheet/store";
+import { readPg, readSheet } from "../sheet/store";
+import type { Sheet } from "../sheet/types";
+
+/** Velocità a piedi del mostro in piedi, da testi come "9 m" o "30 ft., Fly 60 ft.". */
+function monsterSpeedFt(s: Sheet | undefined): number | undefined {
+  if (s?.tipo !== "mostro" || !s.velocita) return undefined;
+  const m = s.velocita.match(/([\d.,]+)\s*(m|ft)/i);
+  if (!m) return undefined;
+  const n = parseFloat(m[1].replace(",", "."));
+  return m[2].toLowerCase() === "m" ? Math.round(n / 0.3) : n;
+}
 
 interface HistoryEntry {
   step: Step;
@@ -44,9 +54,12 @@ export function MovePanel({ onClose, itemId }: { onClose: () => void; itemId?: s
   const sceneReady = useSceneReady(ready);
   const grid = useGrid(sceneReady);
   const characters = useItems(sceneReady, isCharacter);
-  const mine = useMemo(() => (me ? tokensOf(characters, me) : []), [characters, me]);
-
   const initial = itemId ?? new URLSearchParams(window.location.search).get("item");
+  // Il master può muovere qualsiasi token (mostri compresi); il giocatore solo i propri.
+  const mine = useMemo(
+    () => (!me ? [] : me.role === "GM" ? characters.filter((c) => c.id === initial) : tokensOf(characters, me)),
+    [characters, me, initial],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(initial);
   const item = mine.find((i) => i.id === selectedId) ?? mine[0];
 
@@ -62,7 +75,7 @@ export function MovePanel({ onClose, itemId }: { onClose: () => void; itemId?: s
 
   // Velocità dalla scheda (default 30 ft = 6 caselle): la vista mostra quel raggio attorno al token.
   const pg = readPg(item);
-  const speedFt = pg?.velocita.camminare ?? 30;
+  const speedFt = pg?.velocita.camminare ?? monsterSpeedFt(readSheet(item)) ?? 30;
   // piedi per casella secondo la scala della griglia (5 ft o 1,5 m)
   const unit = grid?.scale.unit.trim().toLowerCase();
   const ftPerCell = grid ? (unit === "m" ? grid.scale.multiplier / 0.3 : unit === "ft" ? grid.scale.multiplier : 5) : 5;
