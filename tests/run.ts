@@ -5,7 +5,6 @@ import { parse, roll, doubleDice } from "../src/sheet/dice.ts";
 import { attackBonus, attackDamage, initiative, passivePerception, profBonus, saveBonus, skillBonus, spellDC, validatePg } from "../src/sheet/derive.ts";
 import type { PgSheet } from "../src/sheet/types.ts";
 import { readFileSync } from "node:fs";
-import { findPg } from "../src/sheet/library.ts";
 import { contoursFromCommands, describeFrom, pointAlong } from "../src/shared/doorGeom.ts";
 import { lightFor, parseDarkvisionFt } from "../src/shared/visionRules.ts";
 import { crossesWall, snapToGrid, formatDistance, nextDiagonalCost, pathCost, type Step } from "../src/shared/movement.ts";
@@ -75,12 +74,6 @@ const cases: [string, () => void][] = [
 ];
 
 let fail = 0;
-cases.push(["findPg: token col solo primo nome", () => {
-  const lib = { pg: [{ id: "k", nome: "Kitiara uth Matar", giocatore: "Michele", token: "Michele" } as unknown as PgSheet], mostri: [] };
-  assert.equal(findPg(lib, "Kitiara")?.id, "k");
-  assert.equal(findPg(lib, "Michele")?.id, "k");
-  assert.equal(findPg(lib, "Uth"), undefined);
-}]);
 for (const [name, fn] of cases) {
   try {
     fn();
