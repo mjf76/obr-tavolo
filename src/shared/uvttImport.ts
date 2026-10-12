@@ -5,10 +5,12 @@
  *
  * Uso (strumento di preparazione, solo master): la pagina di Owlbear manda al nostro
  * script di background un messaggio `{ type: "obr-tavolo/import", files: File[] }`.
- * I file .dd2vtt/.uvtt diventano scene; le immagini diventano asset personaggio.
+ * I file .dd2vtt/.uvtt diventano scene; le immagini diventano asset personaggio;
+ * i .json (schede PG, bestiario) vanno nell'archivio del master.
  */
 import OBR, { buildImageUpload, buildPath, buildSceneUpload, Command, type Item, type PathCommand } from "@owlbear-rodeo/sdk";
 import { DOORS_KEY } from "./doors";
+import { loadLibrary, merge, parseImport, saveLibrary } from "../sheet/library";
 
 const SCENE_DPI = 150; // dpi della griglia di una scena nuova di Owlbear
 
@@ -123,7 +125,19 @@ export function listenForImports() {
         }
         await OBR.assets.uploadImages(ups, "CHARACTER");
       }
-      await OBR.notification.show(`Import: ${maps.length} scene, ${imgs.length} immagini`, "SUCCESS");
+      // schede PG / bestiario (.json) → archivio del master su questo dispositivo
+      const jsons = d.files.filter((f) => /\.json$/i.test(f.name));
+      let schede = 0;
+      if (jsons.length) {
+        let lib = await loadLibrary();
+        for (const f of jsons) {
+          const r = parseImport(await f.text(), f.name);
+          schede += r.pg.length + r.mostri.length;
+          lib = merge(lib, r);
+        }
+        await saveLibrary(lib);
+      }
+      await OBR.notification.show(`Import: ${maps.length} scene, ${imgs.length} immagini, ${schede} schede`, "SUCCESS");
     } catch (err) {
       await OBR.notification.show(`Import fallito: ${(err as Error).message}`, "ERROR");
     }
