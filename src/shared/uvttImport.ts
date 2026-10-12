@@ -111,10 +111,17 @@ export function listenForImports() {
         await OBR.assets.uploadScenes(scenes, true);
       }
       if (imgs.length) {
-        await OBR.assets.uploadImages(
-          imgs.map((f) => buildImageUpload(f).name(f.name.replace(/\.[^.]+$/, "")).build()),
-          "CHARACTER",
-        );
+        // "Ogre@2.webp" → token di 2×2 caselle, nome "Ogre"
+        const ups = [];
+        for (const f of imgs) {
+          const base = f.name.replace(/\.[^.]+$/, "");
+          const m = base.match(/^(.*)@(\d+)$/);
+          const cells = m ? Number(m[2]) : 1;
+          const bmp = await createImageBitmap(f);
+          ups.push(buildImageUpload(f).name(m ? m[1] : base).dpi(Math.round(bmp.width / cells)).build());
+          bmp.close();
+        }
+        await OBR.assets.uploadImages(ups, "CHARACTER");
       }
       await OBR.notification.show(`Import: ${maps.length} scene, ${imgs.length} immagini`, "SUCCESS");
     } catch (err) {
