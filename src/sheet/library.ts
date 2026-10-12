@@ -129,6 +129,10 @@ export function findMonster(lib: Library, tokenName: string): Monster | undefine
 export function findPg(lib: Library, tokenName: string): PgSheet | undefined {
   const k = matchKey(tokenName);
   return lib.pg.find(
-    (p) => matchKey(p.token ?? p.nome) === k || matchKey(p.nome) === k || (!!p.giocatore && matchKey(p.giocatore) === k),
+    (p) =>
+      matchKey(p.token ?? p.nome) === k ||
+      matchKey(p.nome) === k ||
+      (!!p.giocatore && matchKey(p.giocatore) === k) ||
+      matchKey(p.nome).split(" ")[0] === k, // "Kitiara" → "Kitiara uth Matar"
   );
 }
