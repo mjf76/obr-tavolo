@@ -13,6 +13,7 @@ import { INIT_CHANNEL, isPcToken, updateCombat, type InitMessage } from "../shar
 import { syncVision } from "../shared/vision";
 import { enforceMeasurement } from "../shared/settings";
 import { DOOR_NUMBERS_PREF, syncDoorLabels } from "../shared/doors";
+import { listenForImports } from "../shared/uvttImport";
 
 OBR.onReady(async () => {
   await OBR.contextMenu.create({
@@ -45,6 +46,7 @@ OBR.onReady(async () => {
   }
 
   if ((await OBR.player.getRole()) !== "GM") return;
+  listenForImports();
 
   // Iniziativa tirata dai giocatori → elenco del combattimento (scritto solo dal master).
   OBR.broadcast.onMessage(INIT_CHANNEL, async ({ data }) => {
