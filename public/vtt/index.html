@@ -582,8 +582,11 @@ async function buildZip(){
   return z.generateAsync({type:'blob',compression:'STORE'});
 }
 async function readZip(file,onlyRoles){
-  const z=await JSZip.loadAsync(file);const j=JSON.parse(await z.file('campagna.json').async('string'));
-  for(const m of j.mappe){A[m.id]={};for(const k of ['full','light','video']){const f=z.file(`mappe/${m.id}/${k}`);
+  let z;try{z=await JSZip.loadAsync(file);}catch(e){throw new Error(`"${file.name}" (${mb(file)}) non è uno zip leggibile: forse non è ancora scaricato del tutto da Drive`);}
+  let pre='';const cj=z.file('campagna.json')||(()=>{const f=z.file(/(^|\/)campagna\.json$/)[0];if(f)pre=f.name.replace(/campagna\.json$/,'');return f;})();
+  if(!cj){const nomi=Object.keys(z.files).slice(0,4).join(', ');throw new Error(`"${file.name}" (${mb(file)}) non è un pacchetto Tavolo VTT. Contiene: ${nomi||'niente'}`);}
+  const j=JSON.parse(await cj.async('string'));
+  for(const m of j.mappe){A[m.id]={};for(const k of ['full','light','video']){const f=z.file(`${pre}mappe/${m.id}/${k}`);
     if(f)A[m.id][k]=new Blob([await f.async('arraybuffer')],{type:(m.mime&&m.mime[k])||''});}}
   return j;
 }
