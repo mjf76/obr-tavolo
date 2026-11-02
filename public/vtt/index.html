@@ -52,6 +52,12 @@ body.prep #stage{left:420px}
 .g2 label{font-size:12px;color:var(--mut);display:block;margin-bottom:2px}
 .g2 input,.g2 select{width:100%}
 #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000c;z-index:7;font-size:18px;text-align:center;padding:20px}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px;margin:8px 0}
+.lib button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;font-size:11px;line-height:1.15}
+.lib img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#333}
+.librow{display:grid;grid-template-columns:34px 1fr 64px 28px;gap:5px;align-items:center;margin-bottom:4px}
+.librow img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+.librow input,.librow select{padding:4px 5px;width:100%}
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#000e;padding:8px 14px;border-radius:8px;z-index:9;max-width:90vw}
 </style>
 </head>
@@ -83,6 +89,11 @@ body.prep #stage{left:420px}
   <div class="st" style="margin-bottom:6px">Nome PG · giocatore · colore · visione in quadretti (0 = illimitata) · immagine</div>
   <div id="pgList"></div>
   <button id="pgAdd" class="sm">+ PG</button>
+
+  <h2>Libreria mostri</h2>
+  <div class="st" style="margin-bottom:6px">Token disponibili in sessione con "+ Token" (entrano nascosti). Puoi caricarne tanti insieme.</div>
+  <div id="libList"></div>
+  <input type="file" id="libAdd" accept="image/*" multiple>
 
   <h2>Mappe</h2>
   <div id="mapList"></div>
@@ -134,6 +145,7 @@ body.prep #stage{left:420px}
         <button class="sm" id="eParty">Posiziona i PG</button>
       </div>
       <div class="g2">
+        <div style="grid-column:1/3"><label>Dalla libreria (facoltativo)</label><select id="nLib"><option value="">— nessuno —</option></select></div>
         <div><label>Nome PNG / mostro</label><input id="nNome"></div>
         <div><label>Colore</label><input id="nCol" type="color" value="#b03030"></div>
         <div><label>Taglia</label><select id="nTag"><option value="1">1 quadretto</option><option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option></select></div>
@@ -166,11 +178,13 @@ body.prep #stage{left:420px}
   <div class="st" style="color:var(--mut);font-size:12px;margin-top:8px">Toccando una mappa la vedi tu; tavolo e giocatori la ricevono solo se è spuntata per loro, altrimenti restano sull'ultima.</div>
   <div style="margin-top:12px"><button id="dReset" class="sm">Azzera zone esplorate di questa mappa</button></div></div>
 <div id="shTok" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Nuovo token</h3>
+  <label class="ck"><input type="checkbox" id="dtHid" checked> Entra nascosto a tavolo e giocatori</label>
+  <div id="dtLib" class="lib"></div>
+  <div style="font-size:12px;color:var(--mut);margin:6px 0">Oppure un token senza immagine:</div>
   <div class="g2">
     <div><label>Nome</label><input id="dtNome"></div>
     <div><label>Colore</label><input id="dtCol" type="color" value="#b03030"></div>
     <div><label>Taglia</label><select id="dtTag"><option value="1">1</option><option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option></select></div>
-    <div style="display:flex;align-items:flex-end"><label class="ck"><input type="checkbox" id="dtHid"> Nascosto</label></div>
   </div>
   <button class="pri" id="dtAdd" style="margin-top:10px;width:100%">Aggiungi al centro della vista</button></div>
 <div id="shOne" class="sheet hide"><button class="x sm" data-close>✕</button><h3 id="oTitle"></h3><div class="row" style="justify-content:flex-start" id="oBtns"></div></div>
@@ -277,12 +291,18 @@ function loadExp(s,url){if(!url||!s.m.fog){recompute(s);return;}ensureFog(s);con
 
 /* ---------------- token ---------------- */
 function tp(t){if(t.kind==='pg'){const p=getPG(t.pg)||{};return{nome:p.nome||'?',colore:p.colore||'#3a7bd5',img:p.img,taglia:1};}
-  return{nome:t.nome||'?',colore:t.colore||'#b03030',img:t.img,taglia:+t.taglia||1};}
+  const L=t.lib&&(C.libreria||[]).find(x=>x.id===t.lib);
+  return{nome:t.nome||(L&&L.nome)||'?',colore:t.colore||'#b03030',img:t.img||(L&&L.img),taglia:+t.taglia||(L&&+L.taglia)||1};}
 const icache={};function timg(u){if(!u)return null;if(!icache[u]){const im=new Image();im.onload=()=>dirty=true;im.src=u;icache[u]=im;}return icache[u].complete?icache[u]:null;}
 function snap(s,x,y,sz){let nx=sz%2?Math.floor(x)+0.5:Math.round(x),ny=sz%2?Math.floor(y)+0.5:Math.round(y);
   return[Math.min(Math.max(nx,sz/2),s.m.w-sz/2),Math.min(Math.max(ny,sz/2),s.m.h-sz/2)];}
+function freeSpot(s,x,y,sz){const occ=(px,py)=>s.tokens.some(t=>Math.abs(t.x-px)<(tp(t).taglia+sz)/2-0.01&&Math.abs(t.y-py)<(tp(t).taglia+sz)/2-0.01);
+  let[bx,by]=snap(s,x,y,sz);if(!occ(bx,by))return[bx,by];
+  for(let r=1;r<12;r++)for(let dx=-r;dx<=r;dx++)for(let dy=-r;dy<=r;dy++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+    const[px,py]=snap(s,bx+dx*sz,by+dy*sz,sz);if(!occ(px,py))return[px,py];}return[bx,by];}
+function numera(s,nome){const n=s.tokens.filter(t=>t.kind!=='pg'&&String(tp(t).nome).replace(/ \d+$/,'')===nome).length;return n?nome+' '+(n+1):nome;}
 function placeParty(s,cx,cy){const have=new Set(s.tokens.filter(t=>t.kind==='pg').map(t=>t.pg));let i=0;const added=[];
-  C.pg.forEach(p=>{if(have.has(p.id))return;const [x,y]=snap(s,cx+(i%3)-1,cy+Math.floor(i/3),1);i++;const t={id:uid(),kind:'pg',pg:p.id,x,y};s.tokens.push(t);added.push(t);});
+  C.pg.forEach(p=>{if(have.has(p.id))return;const [x,y]=freeSpot(s,cx+(i%3)-1,cy+Math.floor(i/3),1);i++;const t={id:uid(),kind:'pg',pg:p.id,x,y};s.tokens.push(t);added.push(t);});
   return added.length;}
 
 /* ---------------- disegno ---------------- */
@@ -430,8 +450,20 @@ function renderPrep(){
     im.innerHTML=(p.img?`<img src="${p.img}" style="width:22px;height:22px;border-radius:50%;vertical-align:middle"> `:'')+`<input type="file" accept="image/*" style="font-size:11px;padding:2px">`;
     im.querySelector('input').onchange=async e=>{const f=e.target.files[0];if(!f)return;p.img=await smallDataURL(f);prepDirty();renderPrep();dirty=true;};
     L.appendChild(im);});
-  renderMapList();renderMapEd();
+  renderLib();renderMapList();renderMapEd();
 }
+function renderLib(){
+  C.libreria=C.libreria||[];const L=$('#libList');L.innerHTML='';
+  C.libreria.forEach(x=>{const r=document.createElement('div');r.className='librow';
+    r.innerHTML=`<img src="${x.img||''}"><input value="${esc(x.nome)}"><select>${[1,2,3,4].map(n=>`<option value="${n}"${+x.taglia===n?' selected':''}>${n}×${n}</option>`).join('')}</select><button class="sm">✕</button>`;
+    const[,n,t,d]=r.children;n.oninput=()=>{x.nome=n.value;prepDirty();dirty=true;};t.onchange=()=>{x.taglia=+t.value;prepDirty();dirty=true;};
+    d.onclick=()=>{if(!confirm('Togliere '+x.nome+' dalla libreria?'))return;C.libreria=C.libreria.filter(y=>y!==x);C.mappe.forEach(m=>(m.tokens||[]).forEach(t=>{if(t.lib===x.id){t.img=x.img;t.nome=t.nome||x.nome;delete t.lib;}}));prepDirty();renderLib();};
+    L.appendChild(r);});
+  const S=$('#nLib');if(S){S.innerHTML='<option value="">— nessuno —</option>'+C.libreria.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('');}
+}
+$('#libAdd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';C.libreria=C.libreria||[];
+  for(const f of fs){C.libreria.push({id:uid(),nome:f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' '),img:await smallDataURL(f,200),taglia:1});}
+  prepDirty();renderLib();toast(fs.length+' token aggiunti');};
 function renderMapList(){
   const L=$('#mapList');L.innerHTML='';
   C.mappe.forEach(m=>{const d=document.createElement('div');d.className='mapItem'+(m.id===prepSel?' sel':'');
@@ -531,8 +563,12 @@ $('#eParty').onclick=()=>{const s=ms(prepSel);if(!s.m.w){toast('Prima carica la 
   const[cx,cy]=viewCenter(s);const n=placeParty(s,cx,cy);prepDirty();renderPrepToks();recompute(s);toast(n?n+' PG posizionati':'I PG sono già sulla mappa');};
 $('#nAdd').onclick=async()=>{const s=ms(prepSel);if(!s.m.w){toast('Prima carica la mappa');return;}
   const sz=+$('#nTag').value;const[cx,cy]=viewCenter(s);const[x,y]=snap(s,cx,cy,sz);
-  const f=$('#nImg').files[0];const img=f?await smallDataURL(f):null;
-  s.tokens.push({id:uid(),kind:'npc',nome:$('#nNome').value.trim()||'Mostro',colore:$('#nCol').value,taglia:sz,img,hidden:$('#nHid').checked,x,y});
+  const f=$('#nImg').files[0];const img=f?await smallDataURL(f):null;const lib=$('#nLib').value;
+  const L=lib&&C.libreria.find(x=>x.id===lib);
+  const t={id:uid(),kind:'npc',colore:$('#nCol').value,hidden:$('#nHid').checked,x,y};
+  if(L){t.lib=L.id;if($('#nNome').value.trim())t.nome=numera(s,$('#nNome').value.trim());else t.nome=numera(s,L.nome);if(img)t.img=img;}
+  else{t.nome=numera(s,$('#nNome').value.trim()||'Mostro');t.taglia=sz;t.img=img;}
+  const tz=tp(t).taglia;[t.x,t.y]=freeSpot(s,cx,cy,tz);s.tokens.push(t);
   $('#nNome').value='';$('#nImg').value='';prepDirty();renderPrepToks();dirty=true;};
 $('#eDel').onclick=()=>{const m=getMap(prepSel);if(!confirm('Eliminare la mappa "'+m.nome+'"?'))return;C.mappe=C.mappe.filter(x=>x!==m);delete A[m.id];resetMS(m.id);
   prepSel=null;cur=null;prepDirty();renderPrep();dirty=true;};
@@ -577,7 +613,7 @@ async function loadPrepFile(file){overlay('Apertura…');try{for(const k in A)de
   catch(err){toast('Non riesco ad aprirlo: '+err.message,6000);}overlay(null);}
 $('#pOpenIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f){fileHandle=null;loadPrepFile(f);}};
 $('#pOpen').onclick=openPack;$('#pSave').onclick=()=>savePack(false);$('#pSaveAs').onclick=()=>savePack(true);
-$('#pNew').onclick=()=>{if(unsaved&&!confirm('Ci sono modifiche non salvate. Ricominciare?'))return;C={v:1,nome:'',pg:[],mappe:[]};for(const k in A)delete A[k];for(const k in MS)delete MS[k];
+$('#pNew').onclick=()=>{if(unsaved&&!confirm('Ci sono modifiche non salvate. Ricominciare?'))return;C={v:1,nome:'',pg:[],mappe:[],libreria:[]};for(const k in A)delete A[k];for(const k in MS)delete MS[k];
   fileHandle=null;prepSel=null;cur=null;unsaved=false;$('#pFile').dataset.n='';$('#pFile').textContent='Nuovo pacchetto';renderPrep();dirty=true;};
 addEventListener('keydown',e=>{if(ROLE==='prep'&&(e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();savePack(false);}});
 
@@ -608,7 +644,7 @@ async function pushTo(c){
 }
 function hostData(c,d){
   if(d.t==='hello'){c.role=d.role==='tavolo'?'tavolo':'pg';if(!conns.includes(c))conns.push(c);
-    c.send({t:'camp',nome:C.nome,pg:C.pg});pushTo(c);dirty=true;return;}
+    c.send({t:'camp',nome:C.nome,pg:C.pg,libreria:C.libreria||[]});pushTo(c);dirty=true;return;}
   if(!c.role)return;
   if(d.t==='move')hostMove(d.map,d.id,d.x,d.y,'pg',c);
 }
@@ -641,19 +677,24 @@ function enterDM(file){
     .catch(err=>{overlay('Pacchetto non valido: '+err.message);});
 }
 $('#dMaps').onclick=()=>{renderMaps();sheet('#shMaps');};
-$('#dTok').onclick=()=>sheet('#shTok');
+$('#dTok').onclick=()=>{const L=$('#dtLib');L.innerHTML='';
+  (C.libreria||[]).forEach(x=>{const b=document.createElement('button');b.innerHTML=`<img src="${x.img||''}"><span>${esc(x.nome)}</span>`;
+    b.onclick=()=>{const s=cur&&MS[cur];if(!s)return;const[cx,cy]=viewCenter(s);const[px,py]=freeSpot(s,cx,cy,+x.taglia||1);
+      s.tokens.push({id:uid(),kind:'npc',lib:x.id,nome:numera(s,x.nome),hidden:$('#dtHid').checked,x:px,y:py});hostTokens(s.id);
+      toast(x.nome+($('#dtHid').checked?' aggiunto (nascosto)':' aggiunto'));};L.appendChild(b);});
+  show(L,(C.libreria||[]).length>0);sheet('#shTok');};
 $('#dFit').onclick=fit;
 $('#dReset').onclick=()=>{const s=cur&&MS[cur];if(!s)return;if(!confirm('Azzerare le zone esplorate?'))return;resetFog(s);bcast(s.id,{t:'resetfog',map:s.id});};
 $('#dParty').onclick=()=>{const s=cur&&MS[cur];if(!s)return;const[cx,cy]=viewCenter(s);const n=placeParty(s,cx,cy);hostTokens(s.id);toast(n?n+' PG posizionati':'I PG sono già qui');};
-$('#dtAdd').onclick=()=>{const s=cur&&MS[cur];if(!s)return;const sz=+$('#dtTag').value;const[cx,cy]=viewCenter(s);const[x,y]=snap(s,cx,cy,sz);
-  s.tokens.push({id:uid(),kind:'npc',nome:$('#dtNome').value.trim()||'Mostro',colore:$('#dtCol').value,taglia:sz,hidden:$('#dtHid').checked,x,y});
+$('#dtAdd').onclick=()=>{const s=cur&&MS[cur];if(!s)return;const sz=+$('#dtTag').value;const[cx,cy]=viewCenter(s);const[x,y]=freeSpot(s,cx,cy,sz);
+  s.tokens.push({id:uid(),kind:'npc',nome:numera(s,$('#dtNome').value.trim()||'Mostro'),colore:$('#dtCol').value,taglia:sz,hidden:$('#dtHid').checked,x,y});
   $('#dtNome').value='';hostTokens(s.id);show('#shTok',false);};
 $('#dCodes').onclick=()=>{
   const base=location.origin+location.pathname;const link=base+'?c='+code;
   const nT=conns.filter(c=>c.role==='tavolo').length,nP=conns.filter(c=>c.role==='pg').length;
   $('#codesBox').innerHTML=`<div style="font-size:34px;letter-spacing:8px;margin:4px 0 10px">${code}</div>
    <div>Tavolo collegati: <b>${nT}</b> · Giocatori: <b>${nP}</b></div>
-   <p style="font-size:13px;color:var(--mut)">Fire Stick: apri <b>${esc(base.replace(/^https?:\/\//,''))}</b>, premi <b>Tavolo</b> e inserisci il codice.</p>
+   <p style="font-size:13px;color:var(--mut)">Fire Stick, la prima volta: apri <b>${esc(base.replace(/^https?:\/\//,''))}?r=t</b>, inserisci il codice e salva la pagina tra i preferiti. Le volte dopo basta aprire il preferito: si ricollega da sola (il codice resta lo stesso).</p>
    <p style="font-size:13px;color:var(--mut)">Giocatori: mandagli questo link, scelgono da soli il PG.</p>
    <div class="row" style="justify-content:flex-start"><button class="pri" id="shareBtn">Condividi link giocatori</button></div>`;
   $('#shareBtn').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'Tavolo VTT',text:'Entra al tavolo:',url:link});else{await navigator.clipboard.writeText(link);toast('Link copiato');}}catch(e){}};
@@ -673,7 +714,7 @@ function connect(role){
   hostConn.on('close',()=>{overlay('Collegamento perso — riprovo…');setTimeout(()=>connect(role),3000);});
 }
 function clientData(d){
-  if(d.t==='camp'){C.nome=d.nome;C.pg=d.pg;if(ROLE==='pg')choosePG();dirty=true;return;}
+  if(d.t==='camp'){C.nome=d.nome;C.pg=d.pg;C.libreria=d.libreria||[];if(ROLE==='pg')choosePG();dirty=true;return;}
   if(d.t==='idle'){cur=null;dirty=true;return;}
   if(d.t==='map'){const old=getMap(d.m.id);if(old&&old.rev!==d.m.rev){resetMS(d.m.id);C.mappe=C.mappe.filter(x=>x.id!==d.m.id);}
     if(!getMap(d.m.id))C.mappe.push(d.m);ms(d.m.id);overlay('Carico la mappa…');return;}
@@ -699,6 +740,7 @@ function choosePG(){
   show('#pick',true);
 }
 function enterClient(role,c){
+  lsSet('tv-last',{code:c,role});
   ROLE=role;show('#start',false);show('#stage',true);show('#hud',true);
   show('#bZo',role==='pg');show('#bZi',role==='pg');show('#bFs',role==='tavolo');
   resize();requestAnimationFrame(draw);wake();overlay('Collegamento al DM…');clientStart(c,role);
@@ -718,7 +760,9 @@ $('#bDM').onclick=()=>dmIn.click();
 const code4=()=>{const c=$('#inCode').value.trim();if(!/^\d{4}$/.test(c)){toast('Inserisci il codice di 4 cifre');$('#inCode').focus();return null;}return c;};
 $('#bTav').onclick=()=>{const c=code4();if(c)enterClient('tavolo',c);};
 $('#bPg').onclick=()=>{const c=code4();if(c)enterClient('pg',c);};
-(function(){const q=new URLSearchParams(location.search);const c=q.get('c');
+(function(){const q=new URLSearchParams(location.search);let c=q.get('c');const last=lsGet('tv-last');
+  if(last&&last.code)$('#inCode').value=last.code;
+  if(!c&&q.get('r')==='t'&&last&&last.code)c=last.code;
   if(c&&/^\d{4}$/.test(c)){if(q.get('r')==='t')enterClient('tavolo',c);else enterClient('pg',c);}})();
 </script>
 </body>
