@@ -203,7 +203,7 @@ let ROLE=null;
 let C={v:1,nome:'',pg:[],mappe:[]};
 const A={};            // asset locali: A[id]={full,light,video} (Blob)
 const MS={};           // stato runtime per mappa
-let cur=null, dirty=true, myPG=null, playerZoom=12;
+let cur=null, dirty=true, myPG=null, playerZoom=13, pending=null;
 let cam={s:30,x:0,y:0};
 const cv=$('#cv'), ctx=cv.getContext('2d');
 
@@ -321,7 +321,7 @@ function draw(){
   if(!s){ctx.fillStyle='#777';ctx.font=(16*d)+'px system-ui';ctx.textAlign='center';
     ctx.fillText(ROLE==='prep'?'Crea o seleziona una mappa':'In attesa del DM…',cv.width/2,cv.height/2);return;}
   if(ROLE==='pg'){const t=s.tokens.find(t=>t.kind==='pg'&&t.pg===myPG);
-    if(t&&!drag){cam.s=cv.clientWidth/playerZoom;cam.x=cv.clientWidth/2-t.x*cam.s;cam.y=cv.clientHeight/2-t.y*cam.s;}
+    if(t&&!drag){cam.s=Math.min(cv.clientWidth,cv.clientHeight)/playerZoom;cam.x=cv.clientWidth/2-t.x*cam.s;cam.y=cv.clientHeight/2-t.y*cam.s;}
     else if(!t&&!drag){const k=Math.min(cv.clientWidth/s.m.w,cv.clientHeight/s.m.h);cam.s=k;cam.x=(cv.clientWidth-s.m.w*k)/2;cam.y=(cv.clientHeight-s.m.h*k)/2;}}
   ctx.setTransform(d*cam.s,0,0,d*cam.s,d*cam.x,d*cam.y);
   const W=s.m.w,H=s.m.h;
@@ -402,7 +402,9 @@ function endPtr(e){
     d.t.x=nx;d.t.y=ny;dirty=true;
     if(ROLE==='prep'){prepDirty();return;}
     if(ROLE==='dm'){hostMove(s.id,d.t.id,nx,ny,'dm');return;}
-    if(ROLE==='pg'){send({t:'move',map:s.id,id:d.t.id,x:nx,y:ny});recompute(s);}
+    if(ROLE==='pg'){send({t:'move',map:s.id,id:d.t.id,x:nx,y:ny});recompute(s);clearTimeout(pending&&pending.h);
+      pending={id:d.t.id,map:s.id,ox:d.ox,oy:d.oy,h:setTimeout(()=>{const t=s.tokens.find(t=>t.id===pending.id);if(t){t.x=pending.ox;t.y=pending.oy;recompute(s);}pending=null;
+        toast('Il DM non ha ricevuto la mossa: il suo telefono è in standby o ha cambiato scheda?',6000);},4000)};}
     return;}
   if(pan){const p=pan;pan=null;if(tap&&(ROLE==='dm'||ROLE==='prep')){const di=hitDoor(s,p.w);if(di>=0){
       if(ROLE==='prep'){s.m.doors[di].closed=!s.m.doors[di].closed;s.doors[di]=s.m.doors[di].closed;prepDirty();dirty=true;}
@@ -730,7 +732,7 @@ function clientData(d){
   if(d.t==='state'){s.tokens=d.tokens;s.doors=d.doors;loadExp(s,d.exp);return;}
   if(d.t==='show'){if(cur&&cur!==d.map&&MS[cur]&&MS[cur].video)MS[cur].video.pause();cur=d.map;if(s.video)s.video.play().catch(()=>{});
     overlay(null);if(ROLE==='tavolo')fit();dirty=true;return;}
-  if(d.t==='move'){const t=s.tokens.find(t=>t.id===d.id);if(t&&!(drag&&drag.t.id===t.id)){t.x=d.x;t.y=d.y;}recompute(s);return;}
+  if(d.t==='move'){if(pending&&pending.id===d.id){clearTimeout(pending.h);pending=null;}const t=s.tokens.find(t=>t.id===d.id);if(t&&!(drag&&drag.t.id===t.id)){t.x=d.x;t.y=d.y;}recompute(s);return;}
   if(d.t==='tokens'){s.tokens=d.tokens;recompute(s);return;}
   if(d.t==='doors'){s.doors=d.doors;recompute(s);return;}
   if(d.t==='resetfog'){resetFog(s);return;}
@@ -749,7 +751,7 @@ function enterClient(role,c){
   resize();requestAnimationFrame(draw);wake();overlay('Collegamento al DM…');clientStart(c,role);
   if(role==='pg'){$('#badge').ondblclick=()=>{lsSet('tv-pg',null);myPG=null;choosePG();};}
 }
-$('#bZi').onclick=()=>{playerZoom=Math.max(4,playerZoom-2);dirty=true;};
+$('#bZi').onclick=()=>{playerZoom=Math.max(5,playerZoom-2);dirty=true;};
 $('#bZo').onclick=()=>{playerZoom=Math.min(60,playerZoom+3);dirty=true;};
 $('#bFs').onclick=()=>{try{document.documentElement.requestFullscreen();}catch(e){}};
 
