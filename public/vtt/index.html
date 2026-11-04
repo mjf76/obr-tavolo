@@ -125,6 +125,9 @@ body.prep #stage{left:420px}
     <div class="q"><b>3 · È animata?</b>
       <label class="ck"><input type="checkbox" id="eAnim"> Sì, ha un video (solo per il tavolo)</label>
       <div id="wAnim" class="hide"><input type="file" id="eVid" accept="video/*"><div class="st" id="sVid">Consigliato mp4 1080p, sotto i 30 MB</div></div>
+      <div style="margin-top:8px">Audio d'ambiente (facoltativo, solo dal tavolo): <input type="file" id="eAud" accept="audio/*"></div>
+      <div class="st" id="sAud">Se il video ha già il suo audio non serve. Se ci sono entrambi, si sente questo.</div>
+      <button class="sm hide" id="eAudDel">Togli audio</button>
     </div>
     <div class="q"><b>4 · Ha una versione light per smartphone?</b>
       <label class="ck"><input type="checkbox" id="eLightHas"> Sì, la carico io</label>
@@ -172,6 +175,7 @@ body.prep #stage{left:420px}
   <button id="dParty">Party qui</button>
   <button id="dFit">Adatta</button>
   <button id="dCodes">Codici</button>
+  <button id="dAud" title="Audio del tavolo">🔊</button>
 </div>
 
 <div id="shMaps" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Mappe</h3><div id="mapsList"></div>
@@ -196,6 +200,7 @@ body.prep #stage{left:420px}
   <div style="margin:6px 0 10px">Per giocare meglio <b>gira il telefono in orizzontale</b> e metti lo schermo intero.</div>
   <button class="pri" id="bFsPg">Schermo intero</button> <button id="bRuotaNo">Più tardi</button>
 </div>
+<div id="audioHint" class="hide" style="position:fixed;right:12px;bottom:12px;z-index:6;background:#000c;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px">🔊 Premi OK sul telecomando per attivare l'audio</div>
 <div id="overlay" class="hide"></div>
 <div id="toast" class="hide"></div>
 
@@ -251,7 +256,7 @@ function ms(id){
       doors:(m.doors||[]).map(d=>d.closed),fog:null,img:null,video:null};}
   return MS[id];
 }
-function resetMS(id){const s=MS[id];if(s){if(s.video){s.video.pause();}}delete MS[id];}
+function resetMS(id){const s=MS[id];if(s){if(s.video){s.video.pause();}if(s.audio){s.audio.pause();}}delete MS[id];}
 
 /* ---------------- geometria e fog ---------------- */
 function segs(s){
@@ -474,7 +479,7 @@ $('#libAdd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';C
 function renderMapList(){
   const L=$('#mapList');L.innerHTML='';
   C.mappe.forEach(m=>{const d=document.createElement('div');d.className='mapItem'+(m.id===prepSel?' sel':'');
-    d.innerHTML=`<span>${esc(m.nome||'(senza nome)')}</span><span>${m.ruoli.tavolo?'<span class="tag">TV</span>':''}${m.ruoli.pg?'<span class="tag">PG</span>':''}${A[m.id]&&A[m.id].video?'<span class="tag">▶</span>':''}${m.fog?'<span class="tag">fog</span>':''}</span>`;
+    d.innerHTML=`<span>${esc(m.nome||'(senza nome)')}</span><span>${m.ruoli.tavolo?'<span class="tag">TV</span>':''}${m.ruoli.pg?'<span class="tag">PG</span>':''}${A[m.id]&&A[m.id].video?'<span class="tag">▶</span>':''}${A[m.id]&&A[m.id].audio?'<span class="tag">♪</span>':''}${m.fog?'<span class="tag">fog</span>':''}</span>`;
     d.onclick=()=>selectPrep(m.id);L.appendChild(d);});
 }
 function selectPrep(id){prepSel=id;cur=id;const s=ms(id);if(s&&!s.img&&A[id]&&A[id].full)imgFromBlob(A[id].full).then(im=>{s.img=im;dirty=true;});
@@ -487,6 +492,7 @@ function renderMapEd(){
   $('#eOx').value=m.offX||0;$('#eOy').value=m.offY||0;$('#eGrid').checked=!!m.grid;
   const lock=!!m.uvtt;['#ePpg','#eQW','#eOx','#eOy'].forEach(x=>$(x).disabled=lock||!m.pxW);
   $('#sGrid').textContent=m.w?`→ ${fmt(m.w)} × ${fmt(m.h)} quadretti (${fmt(m.w*1.5)} × ${fmt(m.h*1.5)} m)`+(lock?' — dal file .uvtt, già allineata ai muri':''):'Carica prima la mappa';
+  $('#sAud').textContent=a.audio?`Audio: ${mb(a.audio)}`:'Se il video ha già il suo audio non serve. Se ci sono entrambi, si sente questo.';show('#eAudDel',!!a.audio);
   $('#eAnim').checked=!!m.anim;show('#wAnim',!!m.anim);$('#sVid').textContent=a.video?`Video: ${mb(a.video)}`+(a.video.size>40e6?' — pesante per la Fire Stick, meglio sotto i 30 MB':''):'Consigliato mp4 1080p, sotto i 30 MB';
   $('#eLightHas').checked=!m.lightAuto&&!!a.light;show('#wLight',$('#eLightHas').checked);
   $('#sLight').textContent=a.light?(m.lightAuto?`Creata automaticamente (${mb(a.light)})`:`Caricata (${mb(a.light)})`):'Se no, la creo io automaticamente dall\'immagine';
@@ -555,6 +561,8 @@ $('#eFull').onchange=async e=>{
 $('#eAnim').onchange=e=>{const m=getMap(prepSel);m.anim=e.target.checked;if(!m.anim&&A[m.id]){delete A[m.id].video;delete m.mime.video;}prepDirty();renderMapEd();renderMapList();};
 $('#eVid').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const m=getMap(prepSel);A[m.id].video=f;m.mime.video=f.type||'video/mp4';prepDirty();renderMapEd();renderMapList();
   if(f.size>40e6)toast('Video da '+mb(f)+': per la Fire Stick conviene ridurlo a 1080p',6000);};
+$('#eAud').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const m=getMap(prepSel);A[m.id].audio=f;m.mime.audio=f.type||'audio/mpeg';prepDirty();renderMapEd();renderMapList();};
+$('#eAudDel').onclick=()=>{const m=getMap(prepSel);delete A[m.id].audio;delete m.mime.audio;prepDirty();renderMapEd();renderMapList();};
 $('#eLightHas').onchange=e=>{show('#wLight',e.target.checked);};
 $('#eLight').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const m=getMap(prepSel);const im=await imgFromBlob(f);
   A[m.id].light=Math.max(im.naturalWidth,im.naturalHeight)>2400?await scaleBlob(im,2048,0.82):f;m.mime.light=A[m.id].light.type;m.lightAuto=false;prepDirty();renderMapEd();};
@@ -585,7 +593,7 @@ async function buildZip(){
   const z=new JSZip();const out=clone(C);
   out.mappe.forEach(m=>{delete m.ratio;});
   z.file('campagna.json',JSON.stringify(out));
-  for(const m of C.mappe){const a=A[m.id]||{};for(const k of ['full','light','video'])if(a[k])z.file(`mappe/${m.id}/${k}`,a[k]);}
+  for(const m of C.mappe){const a=A[m.id]||{};for(const k of ['full','light','video','audio'])if(a[k])z.file(`mappe/${m.id}/${k}`,a[k]);}
   return z.generateAsync({type:'blob',compression:'STORE'});
 }
 async function readZip(file,onlyRoles){
@@ -593,7 +601,7 @@ async function readZip(file,onlyRoles){
   let pre='';const cj=z.file('campagna.json')||(()=>{const f=z.file(/(^|\/)campagna\.json$/)[0];if(f)pre=f.name.replace(/campagna\.json$/,'');return f;})();
   if(!cj){const nomi=Object.keys(z.files).slice(0,4).join(', ');throw new Error(`"${file.name}" (${mb(file)}) non è un pacchetto Tavolo VTT. Contiene: ${nomi||'niente'}`);}
   const j=JSON.parse(await cj.async('string'));
-  for(const m of j.mappe){A[m.id]={};for(const k of ['full','light','video']){const f=z.file(`${pre}mappe/${m.id}/${k}`);
+  for(const m of j.mappe){A[m.id]={};for(const k of ['full','light','video','audio']){const f=z.file(`${pre}mappe/${m.id}/${k}`);
     if(f)A[m.id][k]=new Blob([await f.async('arraybuffer')],{type:(m.mime&&m.mime[k])||''});}}
   return j;
 }
@@ -649,7 +657,9 @@ async function pushTo(c){
   if(!c.sent.has(key)){c.sent.add(key);c.send({t:'map',m:metaOf(m)});
     const img=c.role==='tavolo'?(a.full||a.light):(a.light||a.full);
     if(img)c.send({t:'asset',map:id,k:'img',mime:img.type,buf:await img.arrayBuffer()});
-    if(c.role==='tavolo'&&a.video)c.send({t:'asset',map:id,k:'video',mime:a.video.type,buf:await a.video.arrayBuffer()});}
+    if(c.role==='tavolo'&&a.video)c.send({t:'asset',map:id,k:'video',mime:a.video.type,buf:await a.video.arrayBuffer()});
+    if(c.role==='tavolo'&&a.audio)c.send({t:'asset',map:id,k:'audio',mime:a.audio.type,buf:await a.audio.arrayBuffer()});}
+  if(c.role==='tavolo')c.send({t:'vol',on:audioDM});
   c.send(stateOf(s));c.send({t:'show',map:id});c.cur=id;
 }
 function hostData(c,d){
@@ -658,6 +668,8 @@ function hostData(c,d){
   if(!c.role)return;
   if(d.t==='move')hostMove(d.map,d.id,d.x,d.y,'pg',c);
 }
+let audioDM=true;
+function setAudioDM(on){audioDM=on;$('#dAud').textContent=on?'🔊':'🔇';conns.forEach(c=>{if(c.role==='tavolo'){try{c.send({t:'vol',on});}catch(e){}}});toast(on?'Audio del tavolo acceso':'Audio del tavolo spento');}
 function bcast(mapId,msg){conns.forEach(c=>{if(c.cur===mapId){try{c.send(msg);}catch(e){}}});}
 function hostMove(mapId,id,x,y,who,c){
   const s=ms(mapId);if(!s)return;const t=s.tokens.find(t=>t.id===id);if(!t)return;
@@ -686,6 +698,7 @@ function enterDM(file){
   readZip(file).then(j=>{C=j;overlay(null);hostStart();renderMaps();sheet('#shMaps');toast(C.pg.length+' PG, '+C.mappe.length+' mappe');})
     .catch(err=>{overlay('Pacchetto non valido: '+err.message);});
 }
+$('#dAud').onclick=()=>setAudioDM(!audioDM);
 $('#dMaps').onclick=()=>{renderMaps();sheet('#shMaps');};
 $('#dTok').onclick=()=>{const L=$('#dtLib');L.innerHTML='';
   (C.libreria||[]).forEach(x=>{const b=document.createElement('button');b.innerHTML=`<img src="${x.img||''}"><span>${esc(x.nome)}</span>`;
@@ -726,22 +739,39 @@ function connect(role){
 function clientData(d){
   if(d.t==='camp'){C.nome=d.nome;C.pg=d.pg;C.libreria=d.libreria||[];if(ROLE==='pg')choosePG();dirty=true;return;}
   if(d.t==='idle'){cur=null;dirty=true;return;}
+  if(d.t==='vol'){audioOn=d.on;applyAudio();return;}
   if(d.t==='map'){const old=getMap(d.m.id);if(old&&old.rev!==d.m.rev){resetMS(d.m.id);C.mappe=C.mappe.filter(x=>x.id!==d.m.id);}
     if(!getMap(d.m.id))C.mappe.push(d.m);ms(d.m.id);overlay('Carico la mappa…');return;}
   const s=d.map&&ms(d.map);if(!s)return;
   if(d.t==='asset'){const u=URL.createObjectURL(new Blob([d.buf],{type:d.mime}));
     if(d.k==='img'){const im=new Image();im.onload=()=>{s.img=im;dirty=true;};im.src=u;}
+    else if(d.k==='audio'){const au=new Audio(u);au.loop=true;s.audio=au;if(cur===s.id)applyAudio();}
     else{const v=document.createElement('video');v.muted=true;v.loop=true;v.playsInline=true;v.autoplay=true;v.src=u;s.video=v;
+      v.addEventListener('playing',()=>setTimeout(()=>{if(cur===s.id)applyAudio();},1500),{once:true});
       v.play().catch(()=>{overlay('Premi OK sul telecomando per avviare l\'animazione');addEventListener('pointerdown',()=>{v.play();overlay(null);},{once:true});addEventListener('keydown',()=>{v.play();overlay(null);},{once:true});});}
     return;}
   if(d.t==='state'){s.tokens=d.tokens;s.doors=d.doors;loadExp(s,d.exp);return;}
-  if(d.t==='show'){if(cur&&cur!==d.map&&MS[cur]&&MS[cur].video)MS[cur].video.pause();cur=d.map;if(s.video)s.video.play().catch(()=>{});
-    overlay(null);if(ROLE==='tavolo')fit();dirty=true;return;}
+  if(d.t==='show'){if(cur&&cur!==d.map&&MS[cur]){if(MS[cur].video)MS[cur].video.pause();if(MS[cur].audio)MS[cur].audio.pause();}
+    cur=d.map;if(s.video)s.video.play().catch(()=>{});
+    overlay(null);if(ROLE==='tavolo'){fit();applyAudio();}dirty=true;return;}
   if(d.t==='move'){if(pending&&pending.id===d.id){clearTimeout(pending.h);pending=null;}const t=s.tokens.find(t=>t.id===d.id);if(t&&!(drag&&drag.t.id===t.id)){t.x=d.x;t.y=d.y;}recompute(s);return;}
   if(d.t==='tokens'){s.tokens=d.tokens;recompute(s);return;}
   if(d.t==='doors'){s.doors=d.doors;recompute(s);return;}
   if(d.t==='resetfog'){resetFog(s);return;}
 }
+/* audio solo sul tavolo: parte muto (regola dei browser), si sblocca col primo tasto/tocco */
+let audioOn=true,audioOk=false;
+function hasSound(s){return !!(s&&(s.audio||(s.video&&(s.video.mozHasAudio||s.video.webkitAudioDecodedByteCount>0||(s.video.audioTracks&&s.video.audioTracks.length)))));}
+function applyAudio(){
+  if(ROLE!=='tavolo')return;const s=cur&&MS[cur];
+  Object.values(MS).forEach(x=>{if(x!==s&&x.audio)x.audio.pause();});
+  if(!s)return;const play=audioOn&&audioOk;
+  if(s.audio){if(s.video)s.video.muted=true;if(play)s.audio.play().catch(()=>{});else s.audio.pause();}
+  else if(s.video){s.video.muted=!play;}
+  show('#audioHint',!audioOk&&audioOn&&hasSound(s));
+}
+function unlockAudio(){if(audioOk||ROLE!=='tavolo')return;audioOk=true;applyAudio();}
+addEventListener('keydown',unlockAudio);addEventListener('pointerdown',unlockAudio);
 function choosePG(){
   const saved=lsGet('tv-pg');if(saved&&getPG(saved)){myPG=saved;show('#pick',false);return;}
   const L=$('#pickList');L.innerHTML='';

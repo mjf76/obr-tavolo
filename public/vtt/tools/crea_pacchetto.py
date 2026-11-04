@@ -106,6 +106,10 @@ def main(cfg_path, out_path=None):
             v = P(mc['video'])
             files[f'mappe/{mid}/video'] = open(v, 'rb').read()
             m['anim'] = True; m['mime']['video'] = 'video/webm' if v.lower().endswith('.webm') else 'video/mp4'
+        if mc.get('audio'):
+            au = P(mc['audio'])
+            files[f'mappe/{mid}/audio'] = open(au, 'rb').read()
+            m['mime']['audio'] = {'.ogg': 'audio/ogg', '.wav': 'audio/wav', '.m4a': 'audio/mp4'}.get(os.path.splitext(au)[1].lower(), 'audio/mpeg')
         for t in mc.get('token') or []:
             nome = t['nome']; L = libid.get(re.sub(r' \d+$', '', nome).lower())
             tok = {'id': uid(f"tok:{mid}:{nome}:{t['x']}:{t['y']}"), 'kind': 'npc', 'nome': nome,
