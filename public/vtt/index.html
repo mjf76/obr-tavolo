@@ -191,6 +191,11 @@ body.prep #stage{left:420px}
 <div id="shCodes" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Codici</h3><div id="codesBox"></div></div>
 
 <div id="pick" class="sheet hide"><h3>Chi sei?</h3><div id="pickList" class="row" style="justify-content:flex-start"></div></div>
+<div id="ruota" class="hide" style="position:fixed;left:12px;right:12px;bottom:16px;z-index:6;background:#000d;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center">
+  <div style="font-size:32px">📱↻</div>
+  <div style="margin:6px 0 10px">Per giocare meglio <b>gira il telefono in orizzontale</b> e metti lo schermo intero.</div>
+  <button class="pri" id="bFsPg">Schermo intero</button> <button id="bRuotaNo">Più tardi</button>
+</div>
 <div id="overlay" class="hide"></div>
 <div id="toast" class="hide"></div>
 
@@ -747,13 +752,22 @@ function choosePG(){
 function enterClient(role,c){
   lsSet('tv-last',{code:c,role});
   ROLE=role;show('#start',false);show('#stage',true);show('#hud',true);
-  show('#bZo',role==='pg');show('#bZi',role==='pg');show('#bFs',role==='tavolo');
+  show('#bZo',role==='pg');show('#bZi',role==='pg');show('#bFs',role==='tavolo'||role==='pg');
+  if(role==='pg'){checkRuota();addEventListener('resize',checkRuota);}
   resize();requestAnimationFrame(draw);wake();overlay('Collegamento al DM…');clientStart(c,role);
   if(role==='pg'){$('#badge').ondblclick=()=>{lsSet('tv-pg',null);myPG=null;choosePG();};}
 }
 $('#bZi').onclick=()=>{playerZoom=Math.max(5,playerZoom-2);dirty=true;};
 $('#bZo').onclick=()=>{playerZoom=Math.min(60,playerZoom+3);dirty=true;};
-$('#bFs').onclick=()=>{try{document.documentElement.requestFullscreen();}catch(e){}};
+async function fullscreen(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch(e){}
+  if(ROLE==='pg'){try{await screen.orientation.lock('landscape');}catch(e){}}}
+$('#bFs').onclick=fullscreen;
+let ruotaNo=false;
+function checkRuota(){show('#ruota',ROLE==='pg'&&!ruotaNo&&(innerHeight>innerWidth||!document.fullscreenElement));
+  $('#bFsPg').textContent=document.fullscreenElement?'Fatto':'Schermo intero';}
+document.addEventListener('fullscreenchange',()=>{if(ROLE==='pg')checkRuota();resize();});
+$('#bFsPg').onclick=async()=>{await fullscreen();setTimeout(checkRuota,400);};
+$('#bRuotaNo').onclick=()=>{ruotaNo=true;checkRuota();};
 
 /* ================= AVVIO ================= */
 async function wake(){try{if(navigator.wakeLock)await navigator.wakeLock.request('screen');}catch(e){}}
