@@ -91,6 +91,7 @@ def main(cfg_path, out_path=None):
             if mc.get('muri'):
                 u = parse_uvtt(P(mc['muri']))
                 m.update(uvtt=True, walls=u['walls'], doors=u['doors'], w=u['w'], h=u['h'], ppg=im.size[0]/u['w'], offX=0, offY=0)
+        m['gridType'] = {'quadrata': 'sq', 'esagoni_punta': 'hexP', 'esagoni_lato': 'hexF'}.get(mc.get('griglia_tipo', 'quadrata'), 'sq')
         m['fog'] = bool(mc.get('fog', bool(m['walls'])))
         for nome, r in (mc.get('visione') or {}).items():
             if nome.lower() in names:
