@@ -30,7 +30,7 @@ body.prep #stage{left:420px}
 #prepPane .q{border-left:3px solid var(--line);padding:4px 0 6px 10px;margin:10px 0}
 #prepPane .q b{display:block;margin-bottom:4px}
 #prepPane .st{font-size:12px;color:var(--mut);margin-top:3px}
-.pgrow{display:grid;grid-template-columns:1fr 1fr 44px 58px 28px;gap:4px;margin-bottom:4px;align-items:center}
+.pgrow{display:grid;grid-template-columns:1fr 1fr 44px 74px 28px;gap:4px;margin-bottom:4px;align-items:center}
 .pgrow input{width:100%;padding:5px 6px}
 .mapItem{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;cursor:pointer}
 .mapItem.sel{border-color:var(--acc);background:#2a2618}
@@ -86,7 +86,9 @@ body.prep #stage{left:420px}
   <input id="cNome" style="width:100%" placeholder="Nome campagna / avventura">
 
   <h2>Personaggi</h2>
-  <div class="st" style="margin-bottom:6px">Nome PG · giocatore · colore · visione in quadretti (0 = illimitata) · immagine</div>
+  <div class="pgrow" style="font-size:11px;color:var(--mut);margin-bottom:2px"><span>PG</span><span>Giocatore</span><span>Colore</span><span>👁 Vista</span><span></span></div>
+  <div class="st" style="margin-bottom:6px">Vista in caselle: vuoto o 0 = illimitata · 8 = torcia (12 m) · 12 = scurovisione 18 m · 24 = 36 m. Si può cambiare mappa per mappa (passo 5). Sulla mappa la vedi come cerchio tratteggiato.</div>
+  <datalist id="visteList"><option value="0">illimitata</option><option value="4">6 m</option><option value="8">12 m – torcia</option><option value="12">18 m – scurovisione</option><option value="24">36 m – scurovisione superiore</option></datalist>
   <div id="pgList"></div>
   <button id="pgAdd" class="sm">+ PG</button>
 
@@ -183,6 +185,7 @@ body.prep #stage{left:420px}
   <button id="dCodes">Codici</button>
   <button id="dAud" title="Audio del tavolo">🔊</button>
   <button id="dGrid" title="Griglia">#</button>
+  <button id="dSfx" title="Effetti sonori">🎵</button>
 </div>
 
 <div id="shMaps" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Mappe</h3><div id="mapsList"></div>
@@ -205,6 +208,9 @@ body.prep #stage{left:420px}
   <label class="ck"><input type="checkbox" id="gTav"> Sul tavolo (TV)</label>
   <label class="ck"><input type="checkbox" id="gPg"> Sui telefoni dei giocatori</label>
   <button class="sm" id="gReset" style="margin-top:8px">Torna all'impostazione della mappa</button></div>
+<div id="shSfx" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Effetti sonori (dal tavolo)</h3>
+  <div class="lib" id="sfxList"></div>
+  <div style="font-size:12px;color:var(--mut)">Si sentono solo dalla TV (serve aver premuto OK sul telecomando a inizio sessione).</div></div>
 <div id="shCodes" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Codici</h3><div id="codesBox"></div></div>
 
 <div id="pick" class="sheet hide"><h3>Chi sei?</h3><div id="pickList" class="row" style="justify-content:flex-start"></div></div>
@@ -386,10 +392,13 @@ function draw(){
     (s.m.doors||[]).forEach((dd,i)=>{ctx.strokeStyle=s.doors[i]?'#e04040':'#40d070';ctx.beginPath();ctx.moveTo(dd.a[0],dd.a[1]);ctx.lineTo(dd.b[0],dd.b[1]);ctx.stroke();
       ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc((dd.a[0]+dd.b[0])/2,(dd.a[1]+dd.b[1])/2,0.18,0,7);ctx.fill();});}
   const gm=ROLE==='dm'||ROLE==='prep';
+  if(ROLE==='prep'){ctx.setLineDash([0.25,0.18]);ctx.lineWidth=0.06;
+    s.tokens.forEach(t=>{if(t.kind!=='pg')return;const r=raggio(s,t);if(!(r>0))return;const p=tp(t);ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();});ctx.setLineDash([]);}
   for(const t of s.tokens){
     const ok=gm||(!t.hidden&&(t.kind==='pg'||isVis(s,t.x,t.y)));
     if(ok)drawTok(s,t,gm&&(t.hidden||(t.kind!=='pg'&&s.m.fog&&ROLE==='dm'&&!isVis(s,t.x,t.y))));
   }
+  if(s.tokens.some(t=>t.marks&&t.marks.length))dirty=true;
   if(drag&&down&&down.moved){const t=drag.t,[nx,ny]=snap(s,t.x,t.y,tp(t).taglia);
     const q=gridDist(s.m,drag.ox,drag.oy,nx,ny);
     ctx.strokeStyle='rgba(255,216,74,.9)';ctx.lineWidth=0.06;ctx.setLineDash([0.15,0.1]);ctx.beginPath();ctx.moveTo(drag.ox,drag.oy);ctx.lineTo(nx,ny);ctx.stroke();ctx.setLineDash([]);
@@ -397,8 +406,11 @@ function draw(){
     const lab=q+(gt(s.m)==='sq'?' q':' es')+' · '+fmt(q*1.5)+' m';ctx.font='600 0.4px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
     const w=ctx.measureText(lab).width+0.3,ly=t.y-tp(t).taglia*0.45-0.45;ctx.fillStyle='#000d';ctx.fillRect(t.x-w/2,ly-0.25,w,0.5);ctx.fillStyle='#ffd84a';ctx.fillText(lab,t.x,ly);}
 }
+const MARK={r:'#ff3b30',g:'#34c759',y:'#ffd60a'};
 function drawTok(s,t,ghost){
   const p=tp(t),r=p.taglia*0.45,im=timg(p.img);
+  (t.marks||[]).forEach((k,i)=>{const ph=performance.now()/450+i;const rr=r+0.13+i*0.13+0.03*Math.sin(ph);
+    ctx.globalAlpha=(ghost?0.5:1)*(0.65+0.35*Math.sin(ph));ctx.strokeStyle=MARK[k];ctx.lineWidth=0.1;ctx.beginPath();ctx.arc(t.x,t.y,rr,0,7);ctx.stroke();});
   ctx.globalAlpha=ghost?0.55:1;
   ctx.save();ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.fillStyle=p.colore;ctx.fill();
   if(im){ctx.clip();ctx.drawImage(im,t.x-r,t.y-r,2*r,2*r);}ctx.restore();
@@ -467,11 +479,17 @@ cv.addEventListener('wheel',e=>{if(ROLE!=='dm'&&ROLE!=='prep')return;e.preventDe
 
 /* ---------------- schede (DM e prep) ---------------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>show(b.parentElement,false));
-function sheet(id){['#shMaps','#shTok','#shOne','#shCodes','#shGrid'].forEach(x=>show(x,x===id&&$(x).classList.contains('hide')));}
+function sheet(id){['#shMaps','#shTok','#shOne','#shCodes','#shGrid','#shSfx'].forEach(x=>show(x,x===id&&$(x).classList.contains('hide')));}
 function tokSheet(s,t){
   const p=tp(t);$('#oTitle').textContent=p.nome;const B=$('#oBtns');B.innerHTML='';
   const add=(txt,fn)=>{const b=document.createElement('button');b.textContent=txt;b.onclick=()=>{fn();show('#shOne',false);};B.appendChild(b);};
+  const M=document.createElement('div');M.style.cssText='display:flex;gap:8px;width:100%;margin-bottom:8px;align-items:center';
+  M.innerHTML='<span style="font-size:13px;color:var(--mut)">Segno:</span>';
+  [['r','🔴 Rosso'],['g','🟢 Verde'],['y','🟡 Giallo']].forEach(([k,lab])=>{const b=document.createElement('button');const on=(t.marks||[]).includes(k);
+    b.textContent=lab;if(on)b.className='pri';b.onclick=()=>{const cur=new Set(t.marks||[]);cur.has(k)?cur.delete(k):cur.add(k);tokEdit(s,t.id,{marks:['r','g','y'].filter(x=>cur.has(x))});tokSheet(s,t);};M.appendChild(b);});
+  B.appendChild(M);
   if(t.kind!=='pg')add(t.hidden?'Mostra ai giocatori':'Nascondi',()=>tokEdit(s,t.id,{hidden:!t.hidden}));
+  if((t.marks||[]).length)add('Togli segni',()=>tokEdit(s,t.id,{marks:[]}));
   add('Elimina',()=>tokDel(s,t.id));
   show('#shOne',true);
 }
@@ -493,7 +511,7 @@ function renderPrep(){
   $('#cNome').value=C.nome||'';
   const L=$('#pgList');L.innerHTML='';
   C.pg.forEach(p=>{const r=document.createElement('div');r.className='pgrow';
-    r.innerHTML=`<input value="${esc(p.nome)}" placeholder="PG"><input value="${esc(p.giocatore)}" placeholder="giocatore"><input type="color" value="${p.colore||'#3a7bd5'}"><input type="number" min="0" value="${p.raggio||0}" title="visione in quadretti, 0 = illimitata"><button class="sm" title="elimina">✕</button>`;
+    r.innerHTML=`<input value="${esc(p.nome)}" placeholder="PG"><input value="${esc(p.giocatore)}" placeholder="giocatore"><input type="color" value="${p.colore||'#3a7bd5'}"><input type="number" min="0" list="visteList" value="${p.raggio||''}" placeholder="∞" title="vista in caselle, vuoto/0 = illimitata"><button class="sm" title="elimina">✕</button>`;
     const [n,g,c,ra,x]=r.children;
     n.oninput=()=>{p.nome=n.value;prepDirty();renderMapEd();dirty=true;};g.oninput=()=>{p.giocatore=g.value;prepDirty();};
     c.oninput=()=>{p.colore=c.value;prepDirty();dirty=true;};ra.oninput=()=>{p.raggio=+ra.value||0;prepDirty();};
@@ -588,6 +606,27 @@ function doCal(m,p1,p2,n){const d=Math.hypot(p2[0]-p1[0],p2[1]-p1[1]);if(d<10){t
   m.ppg=+k.toFixed(4);m.offX=+ox.toFixed(2);m.offY=+oy.toFixed(2);applyGrid(m);
   toast(`Calibrata: ${fmt(m.ppg)} px per casella → ${fmt(m.w)} × ${fmt(m.h)} ${unita(m)}`,6000);}
 $('#eGrid').onchange=e=>{getMap(prepSel).grid=e.target.checked;prepDirty();dirty=true;};
+/* lettura della griglia: 1) dal nome del file ("32x18"), 2) dalle linee disegnate (autocorrelazione) */
+async function detectGrid(im,name){
+  const W0=im.naturalWidth,H0=im.naturalHeight;
+  const mm=String(name||'').match(/(\d{1,3})\s*[x×]\s*(\d{1,3})/i);
+  if(mm){const c=+mm[1],r=+mm[2],p1=W0/c,p2=H0/r;if(c>=4&&r>=4&&Math.abs(p1-p2)/p1<0.03)return{ppg:(p1+p2)/2,offX:0,offY:0,src:' nome del file ('+c+'×'+r+')'};}
+  const k=Math.min(1,1600/Math.max(W0,H0)),W=Math.round(W0*k),H=Math.round(H0*k);
+  const cv2=document.createElement('canvas');cv2.width=W;cv2.height=H;const c2=cv2.getContext('2d',{willReadFrequently:true});c2.drawImage(im,0,0,W,H);
+  const d=c2.getImageData(0,0,W,H).data,g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=0.3*d[4*i]+0.59*d[4*i+1]+0.11*d[4*i+2];
+  const X=new Float32Array(W),Y=new Float32Array(H);
+  for(let y=1;y<H;y++)for(let x=1;x<W;x++){const v=g[y*W+x];X[x]+=Math.abs(v-g[y*W+x-1]);Y[y]+=Math.abs(v-g[(y-1)*W+x]);}
+  const hp=a=>{const n=a.length,o=new Float32Array(n),r=8;for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.max(0,i-r);j<=Math.min(n-1,i+r);j++){s+=a[j];c++;}o[i]=Math.max(0,a[i]-s/c);}return o;};
+  const PX=hp(X),PY=hp(Y);
+  const ac=(a,P)=>{let s=0,e=0;for(let i=0;i+P<a.length;i++){s+=a[i]*a[i+P];e+=a[i]*a[i];}return e?s/e:0;};
+  const best=a=>{const mx=Math.min(260,Math.floor(a.length/3));let sc=[],top=0;for(let P=12;P<=mx;P++){const v=ac(a,P);sc[P]=v;if(v>top)top=v;}
+    if(top<0.2)return null;for(let P=12;P<=mx;P++)if(sc[P]>=0.85*top&&sc[P]>=sc[P-1]&&sc[P]>=(sc[P+1]||0))return{P,v:sc[P]};return null;};
+  const bx=best(PX),by=best(PY);if(!bx||!by||Math.abs(bx.P-by.P)/bx.P>0.05)return null;
+  const comb=(a,P)=>{let bs=-1,bp=0;for(let ph=0;ph<P;ph+=0.5){let s=0;for(let x=ph;x<a.length-1;x+=P){const i=Math.floor(x),f=x-i;s+=a[i]*(1-f)+a[i+1]*f;}if(s>bs){bs=s;bp=ph;}}return[bs,bp];};
+  let bestP=(bx.P+by.P)/2,bs=-1,phx=0,phy=0;
+  for(let P=bestP-1.5;P<=bestP+1.5;P+=0.05){const[sx,px]=comb(PX,P),[sy,py]=comb(PY,P);if(sx+sy>bs){bs=sx+sy;bestP=P;phx=px;phy=py;}}
+  const ppg=bestP/k;return{ppg,offX:(phx/k)%ppg,offY:(phy/k)%ppg,src:'le linee della mappa'};
+}
 async function setFull(m,blob,src){
   const im=await imgFromBlob(blob);
   let full=blob;if(Math.max(im.naturalWidth,im.naturalHeight)>4096||blob.size>12e6){full=await scaleBlob(im,4096,0.9);}
@@ -606,9 +645,11 @@ $('#eFull').onchange=async e=>{
       toast(`Mappa ${u.w}×${u.h} quadretti, ${u.walls.length} muri, ${u.doors.length} porte`);
     }else{
       const im=await setFull(m,f,f.name);m.uvtt=false;m.walls=[];m.doors=[];
-      m.ppg=guessPpg(im.naturalWidth,im.naturalHeight);m.offX=0;m.offY=0;
-      m.w=+(m.pxW/m.ppg).toFixed(4);m.h=+(m.pxH/m.ppg).toFixed(4);
-      toast(`Ho stimato ${m.ppg} px per quadretto (${fmt(m.w)} × ${fmt(m.h)}): controlla la griglia gialla e correggi al passo 2`,7000);
+      m.gridType='sq';overlay('Leggo la griglia…');const gr=await detectGrid(im,f.name);overlay(null);
+      if(gr){m.ppg=+gr.ppg.toFixed(4);m.offX=+gr.offX.toFixed(2);m.offY=+gr.offY.toFixed(2);}else{m.ppg=guessPpg(im.naturalWidth,im.naturalHeight);m.offX=0;m.offY=0;}
+      m.w=+((m.pxW-m.offX)/m.ppg).toFixed(4);m.h=+((m.pxH-m.offY)/m.ppg).toFixed(4);
+      toast(gr?`Griglia letta dal${gr.src}: ${fmt(m.w)} × ${fmt(m.h)} caselle (${fmt(m.ppg)} px). Controlla la griglia gialla.`
+              :`Non trovo una griglia: ho stimato ${fmt(m.ppg)} px per casella (${fmt(m.w)} × ${fmt(m.h)}). Usa 🎯 Calibra al passo 2.`,8000);
     }
     if(!m.nome||m.nome==='Nuova mappa')m.nome=f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');
     prepDirty();resetMS(m.id);selectPrep(m.id);
@@ -760,6 +801,9 @@ function enterDM(file){
     .catch(err=>{overlay('Pacchetto non valido: '+err.message);});
 }
 $('#dAud').onclick=()=>setAudioDM(!audioDM);
+const SFXL=[['guarigione','✨','Guarigione / benedizione'],['esplosione','💥','Esplosione'],['tuono','⚡','Fulmine / tuono'],['spada','⚔️','Colpo di spada'],['ruggito','🐉','Ruggito']];
+$('#dSfx').onclick=()=>{const L=$('#sfxList');L.innerHTML='';SFXL.forEach(([k,ic,lab])=>{const b=document.createElement('button');b.innerHTML=`<span style="font-size:28px">${ic}</span><span>${lab}</span>`;
+  b.onclick=()=>{const n=conns.filter(c=>c.role==='tavolo');n.forEach(c=>{try{c.send({t:'sfx',k});}catch(e){}});toast(n.length?lab+' ▶ tavolo':'Nessun tavolo collegato');};L.appendChild(b);});sheet('#shSfx');};
 $('#dGrid').onclick=()=>{renderGridSheet();sheet('#shGrid');};
 $('#gDm').onchange=e=>{gridV.dm=e.target.checked;dirty=true;};
 $('#gTav').onchange=e=>{gridV.tavolo=e.target.checked;sendGrid('tavolo');};
@@ -807,6 +851,7 @@ function clientData(d){
   if(d.t==='idle'){cur=null;dirty=true;return;}
   if(d.t==='vol'){audioOn=d.on;applyAudio();return;}
   if(d.t==='gridv'){gridOv=d.on;dirty=true;return;}
+  if(d.t==='sfx'){if(ROLE==='tavolo')playSfx(d.k);return;}
   if(d.t==='map'){const old=getMap(d.m.id);if(old&&old.rev!==d.m.rev){resetMS(d.m.id);C.mappe=C.mappe.filter(x=>x.id!==d.m.id);}
     if(!getMap(d.m.id))C.mappe.push(d.m);ms(d.m.id);overlay('Carico la mappa…');return;}
   const s=d.map&&ms(d.map);if(!s)return;
@@ -837,7 +882,26 @@ function applyAudio(){
   else if(s.video){s.video.muted=!play;}
   show('#audioHint',!audioOk&&audioOn&&hasSound(s));
 }
-function unlockAudio(){if(audioOk||ROLE!=='tavolo')return;audioOk=true;applyAudio();}
+function unlockAudio(){if(audioOk||ROLE!=='tavolo')return;audioOk=true;try{ac();}catch(e){}applyAudio();}
+/* effetti sonori sintetizzati (nessun file, nessuna licenza) */
+let AC=null,OUT=null;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();OUT=AC.createDynamicsCompressor();OUT.connect(AC.destination);}if(AC.state==='suspended')AC.resume();return AC;}
+function nbuf(c,dur){const b=c.createBuffer(1,Math.ceil(c.sampleRate*dur),c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b;}
+function env(g,t0,a,pk,dec){g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(pk,t0+a);g.gain.exponentialRampToValueAtTime(0.0001,t0+a+dec);}
+function tone(c,type,f,t,a,pk,dec,dest){const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;env(g,t,a,pk,dec);o.connect(g).connect(dest||OUT);o.start(t);o.stop(t+a+dec+0.05);return o;}
+function noise(c,t,dur,ftype,f0,f1,a,pk,dec,q){const n=c.createBufferSource();n.buffer=nbuf(c,dur);const f=c.createBiquadFilter();f.type=ftype;f.Q.value=q||0.7;
+  f.frequency.setValueAtTime(f0,t);if(f1)f.frequency.exponentialRampToValueAtTime(f1,t+dur);const g=c.createGain();env(g,t,a,pk,dec);n.connect(f).connect(g).connect(OUT);n.start(t);n.stop(t+dur);}
+const SFX={
+  guarigione(c,t){[523.25,659.25,783.99,1046.5,1318.5,1567.98].forEach((f,i)=>{tone(c,'sine',f,t+i*0.11,0.04,0.16,2.2);tone(c,'sine',f*2.001,t+i*0.11,0.04,0.04,1.4);});noise(c,t,2.5,'highpass',6000,9000,0.6,0.03,1.8);},
+  esplosione(c,t){noise(c,t,2.6,'lowpass',4000,60,0.008,1.2,2.4);const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(28,t+1.2);env(g,t,0.01,1,1.4);o.connect(g).connect(OUT);o.start(t);o.stop(t+1.6);},
+  tuono(c,t){[0,0.06,0.15].forEach(dt=>noise(c,t+dt,0.25,'highpass',2500,null,0.002,0.9,0.18));noise(c,t+0.1,3.5,'lowpass',900,70,0.25,0.9,3.1);},
+  spada(c,t){[1870,2710,4130,5600].forEach((f,i)=>tone(c,i%2?'triangle':'sine',f,t,0.002,0.25/(i+1),0.9-i*0.12));noise(c,t,0.15,'bandpass',3500,null,0.001,0.6,0.12,3);},
+  ruggito(c,t){const o=c.createOscillator(),l=c.createOscillator(),lg=c.createGain(),f=c.createBiquadFilter(),g=c.createGain();
+    o.type='sawtooth';o.frequency.setValueAtTime(95,t);o.frequency.linearRampToValueAtTime(70,t+2);l.frequency.value=7;lg.gain.value=9;l.connect(lg).connect(o.frequency);
+    f.type='lowpass';f.frequency.setValueAtTime(300,t);f.frequency.linearRampToValueAtTime(900,t+0.6);f.frequency.linearRampToValueAtTime(250,t+2.2);env(g,t,0.25,0.8,2);
+    o.connect(f).connect(g).connect(OUT);o.start(t);l.start(t);o.stop(t+2.4);l.stop(t+2.4);noise(c,t,2.3,'lowpass',700,200,0.3,0.25,1.9);}
+};
+function playSfx(k){if(!audioOk){show('#audioHint',true);return;}try{const c=ac();SFX[k]&&SFX[k](c,c.currentTime+0.02);}catch(e){}}
 addEventListener('keydown',unlockAudio);addEventListener('pointerdown',unlockAudio);
 function choosePG(){
   const saved=lsGet('tv-pg');if(saved&&getPG(saved)){myPG=saved;show('#pick',false);return;}
