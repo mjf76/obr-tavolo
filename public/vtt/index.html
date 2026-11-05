@@ -581,9 +581,11 @@ $('#eNome').oninput=e=>{getMap(prepSel).nome=e.target.value;prepDirty();renderMa
 $('#eTav').onchange=e=>{getMap(prepSel).ruoli.tavolo=e.target.checked;prepDirty();renderMapList();};
 $('#ePg').onchange=e=>{getMap(prepSel).ruoli.pg=e.target.checked;prepDirty();renderMapList();};
 const fmt=v=>String(+(+v).toFixed(1)).replace('.',',');
-function guessPpg(W,H){const pref=[100,120,140,70,72,128,150,200,256,300,50,64,75,80,90,96,110,112,160,180,240];
-  for(const c of pref)if(W%c===0&&H%c===0&&W/c>=6&&W/c<=120)return c;
-  for(let c=40;c<=320;c++)if(W%c===0&&H%c===0&&W/c>=8&&W/c<=80)return c;return 100;}
+/* senza griglia disegnata: sceglie la misura che dà un numero di caselle "da battlemap" (20-45 in larghezza) */
+function guessPpg(W,H){const pref=[100,120,140,70,72,128,150,200,256,300,50,60,64,75,80,90,96,110,112,160,180,240];
+  let best=null,bs=-1;for(let c=30;c<=320;c++){if(W%c||H%c)continue;const n=W/c;
+    const sc=(n>=20&&n<=45?100:n>=10&&n<=80?40:0)+(pref.includes(c)?20:0)-Math.abs(n-32)/4;if(sc>bs){bs=sc;best=c;}}
+  return best||100;}
 function applyGrid(m){m.offX=+m.offX||0;m.offY=+m.offY||0;m.w=+((m.pxW-m.offX)/m.ppg).toFixed(4);m.h=+((m.pxH-m.offY)/m.ppg).toFixed(4);
   (m.tokens||[]).forEach(t=>{t.x=Math.min(t.x,m.w-0.5);t.y=Math.min(t.y,m.h-0.5);});prepDirty();resetMS(m.id);selectPrep(m.id);}
 $('#ePpg').onchange=e=>{const m=getMap(prepSel);const v=+e.target.value;if(!(v>=5))return;m.ppg=v;applyGrid(m);};
@@ -649,7 +651,7 @@ $('#eFull').onchange=async e=>{
       if(gr){m.ppg=+gr.ppg.toFixed(4);m.offX=+gr.offX.toFixed(2);m.offY=+gr.offY.toFixed(2);}else{m.ppg=guessPpg(im.naturalWidth,im.naturalHeight);m.offX=0;m.offY=0;}
       m.w=+((m.pxW-m.offX)/m.ppg).toFixed(4);m.h=+((m.pxH-m.offY)/m.ppg).toFixed(4);
       toast(gr?`Griglia letta dal${gr.src}: ${fmt(m.w)} × ${fmt(m.h)} caselle (${fmt(m.ppg)} px). Controlla la griglia gialla.`
-              :`Non trovo una griglia: ho stimato ${fmt(m.ppg)} px per casella (${fmt(m.w)} × ${fmt(m.h)}). Usa 🎯 Calibra al passo 2.`,8000);
+              :`Nessuna griglia disegnata: ho stimato ${fmt(m.w)} × ${fmt(m.h)} caselle. Se sai quante sono, scrivile al passo 2 in "caselle in larghezza" (oppure mettile nel nome del file, es. _32x18).`,9000);
     }
     if(!m.nome||m.nome==='Nuova mappa')m.nome=f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');
     prepDirty();resetMS(m.id);selectPrep(m.id);
