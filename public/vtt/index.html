@@ -48,6 +48,7 @@ body.prep #stage{left:420px}
 .sheet .x{position:absolute;right:12px;top:10px}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #2a2a2a}
 .mrow.on{color:var(--acc)}
+.lib button.on{outline:2px solid var(--acc)}
 .vrow{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 10px}.vrow button.on{background:var(--acc);color:#000}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g2 label{font-size:12px;color:var(--mut);display:block;margin-bottom:2px}
@@ -97,6 +98,11 @@ body.prep #stage{left:420px}
   <div class="st" style="margin-bottom:6px">Token disponibili in sessione con "+ Token" (entrano nascosti). Puoi caricarne tanti insieme.</div>
   <div id="libList"></div>
   <input type="file" id="libAdd" accept="image/*" multiple>
+
+  <h2>Atmosfere (audio)</h2>
+  <div class="st" style="margin-bottom:6px">Sottofondi che il DM fa partire su qualunque mappa con 🎶 (taverna, acqua, foresta, combattimento…). Sostituiscono l'audio della mappa finché il DM non torna ad "Audio della mappa". Si sentono solo dalla TV.</div>
+  <div id="atmoList"></div>
+  <input type="file" id="atmoAdd" accept="audio/*" multiple>
 
   <h2>Mappe</h2>
   <div id="mapList"></div>
@@ -186,6 +192,7 @@ body.prep #stage{left:420px}
   <button id="dFit">Adatta</button>
   <button id="dCodes">Codici</button>
   <button id="dAud" title="Audio del tavolo">🔊</button>
+  <button id="dAtmo" title="Atmosfera di sottofondo">🎶</button>
   <button id="dGrid" title="Griglia">#</button>
   <button id="dSfx" title="Effetti sonori">🎵</button>
 </div>
@@ -210,6 +217,9 @@ body.prep #stage{left:420px}
   <label class="ck"><input type="checkbox" id="gTav"> Sul tavolo (TV)</label>
   <label class="ck"><input type="checkbox" id="gPg"> Sui telefoni dei giocatori</label>
   <button class="sm" id="gReset" style="margin-top:8px">Torna all'impostazione della mappa</button></div>
+<div id="shAtmo" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Atmosfera (dal tavolo)</h3>
+  <div class="lib" id="atmoSheet"></div>
+  <div style="font-size:12px;color:var(--mut)">Resta attiva anche cambiando mappa, finché non scegli "Audio della mappa". Il 🔊 accende/spegne tutto.</div></div>
 <div id="shSfx" class="sheet hide"><button class="x sm" data-close>✕</button><h3>Effetti sonori (dal tavolo)</h3>
   <div class="lib" id="sfxList"></div>
   <div style="font-size:12px;color:var(--mut)">Si sentono solo dalla TV (serve aver premuto OK sul telecomando a inizio sessione).</div></div>
@@ -413,13 +423,13 @@ function draw(){
 }
 const MARK={r:'#ff3b30',g:'#34c759',y:'#ffd60a'};
 function drawTok(s,t,ghost){
-  const p=tp(t),r=p.taglia*0.45,im=timg(p.img);
+  const p=tp(t),r=p.taglia*0.47,im=timg(p.img);
   (t.marks||[]).forEach((k,i)=>{const ph=performance.now()/450+i;const rr=r+0.13+i*0.13+0.03*Math.sin(ph);
     ctx.globalAlpha=(ghost?0.5:1)*(0.65+0.35*Math.sin(ph));ctx.strokeStyle=MARK[k];ctx.lineWidth=0.1;ctx.beginPath();ctx.arc(t.x,t.y,rr,0,7);ctx.stroke();});
   ctx.globalAlpha=ghost?0.55:1;
   ctx.save();ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.fillStyle=p.colore;ctx.fill();
   if(im){ctx.clip();ctx.drawImage(im,t.x-r,t.y-r,2*r,2*r);}ctx.restore();
-  ctx.lineWidth=t.kind==='pg'?0.14:0.08;ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
+  ctx.lineWidth=t.kind==='pg'?0.06:0.04;ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
   if(t.hidden){ctx.setLineDash([0.12,0.1]);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(t.x,t.y,r+0.08,0,7);ctx.stroke();ctx.setLineDash([]);}
   if(!im){ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 '+(r*0.8)+'px system-ui';
     const w=String(p.nome).trim().split(/\s+/);ctx.fillText((w.length>1?w[0][0]+w[1][0]:String(p.nome).slice(0,2)).toUpperCase(),t.x,t.y+0.02);}
@@ -484,7 +494,7 @@ cv.addEventListener('wheel',e=>{if(ROLE!=='dm'&&ROLE!=='prep')return;e.preventDe
 
 /* ---------------- schede (DM e prep) ---------------- */
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>show(b.parentElement,false));
-function sheet(id){['#shMaps','#shTok','#shOne','#shCodes','#shGrid','#shSfx'].forEach(x=>show(x,x===id&&$(x).classList.contains('hide')));}
+function sheet(id){['#shMaps','#shTok','#shOne','#shCodes','#shGrid','#shSfx','#shAtmo'].forEach(x=>show(x,x===id&&$(x).classList.contains('hide')));}
 function tokSheet(s,t){
   const p=tp(t);$('#oTitle').textContent=p.nome;const B=$('#oBtns');B.innerHTML='';
   const add=(txt,fn)=>{const b=document.createElement('button');b.textContent=txt;b.onclick=()=>{fn();show('#shOne',false);};B.appendChild(b);};
@@ -512,8 +522,13 @@ function enterPrep(){
   resize();requestAnimationFrame(draw);
   const draft=null;renderPrep();
 }
+function renderAtmo(){const L=$('#atmoList');if(!L)return;L.innerHTML='';
+  (C.atmosfere||[]).forEach(a=>{const r=document.createElement('div');r.className='librow';r.style.gridTemplateColumns='1fr auto auto';
+    const b=A['atmo:'+a.id];r.innerHTML=`<input value="${esc(a.nome)}"><span class="st">${b?mb(b):'manca il file'}</span><button class="sm" title="elimina">✕</button>`;
+    r.querySelector('input').oninput=e=>{a.nome=e.target.value;prepDirty();};
+    r.querySelector('button').onclick=()=>{C.atmosfere=C.atmosfere.filter(x=>x!==a);delete A['atmo:'+a.id];prepDirty();renderAtmo();};L.appendChild(r);});}
 function renderPrep(){
-  $('#cNome').value=C.nome||'';
+  $('#cNome').value=C.nome||'';renderAtmo();
   const L=$('#pgList');L.innerHTML='';
   C.pg.forEach(p=>{const r=document.createElement('div');r.className='pgrow';
     r.innerHTML=`<input value="${esc(p.nome)}" placeholder="PG"><input value="${esc(p.giocatore)}" placeholder="giocatore"><input type="color" value="${p.colore||'#3a7bd5'}"><input type="number" min="0" list="visteList" value="${p.raggio||''}" placeholder="∞" title="vista in caselle, vuoto/0 = illimitata"><button class="sm" title="elimina">✕</button>`;
@@ -699,6 +714,7 @@ async function buildZip(){
   z.file('campagna.json',JSON.stringify(out));
   for(const m of C.mappe){const a=A[m.id]||{};for(const k of ['full','light','video','audio'])if(a[k])z.file(`mappe/${m.id}/${k}`,a[k]);
     for(const v of m.versioni||[]){const b=A[m.id+'~'+v.id]||{};for(const k of ['full','light','video','audio'])if(b[k])z.file(`mappe/${m.id}/v/${v.id}/${k}`,b[k]);}}
+  for(const a of C.atmosfere||[])if(A['atmo:'+a.id])z.file(`atmosfere/${a.id}`,A['atmo:'+a.id]);
   return z.generateAsync({type:'blob',compression:'STORE'});
 }
 async function readZip(file,onlyRoles){
@@ -710,6 +726,7 @@ async function readZip(file,onlyRoles){
     if(f)A[m.id][k]=new Blob([await f.async('arraybuffer')],{type:(m.mime&&m.mime[k])||''});}
     for(const v of m.versioni||[]){const key=m.id+'~'+v.id;A[key]={};for(const k of ['full','light','video','audio']){const f=z.file(`${pre}mappe/${m.id}/v/${v.id}/${k}`);
       if(f)A[key][k]=new Blob([await f.async('arraybuffer')],{type:(v.mime&&v.mime[k])||''});}}}
+  for(const a of j.atmosfere||[]){const f=z.file(`${pre}atmosfere/${a.id}`);if(f)A['atmo:'+a.id]=new Blob([await f.async('arraybuffer')],{type:a.mime||'audio/mpeg'});}
   return j;
 }
 const fname=()=>((C.nome||'campagna').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')||'campagna')+'.tavolo.zip';
@@ -738,6 +755,8 @@ async function loadPrepFile(file){overlay('Apertura…');try{for(const k in A)de
   catch(err){toast('Non riesco ad aprirlo: '+err.message,6000);}overlay(null);}
 $('#pOpenIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f){fileHandle=null;loadPrepFile(f);}};
 $('#pOpen').onclick=openPack;$('#pSave').onclick=()=>savePack(false);$('#pSaveAs').onclick=()=>savePack(true);
+$('#atmoAdd').onchange=e=>{const fs=[...e.target.files];e.target.value='';C.atmosfere=C.atmosfere||[];
+  fs.forEach(f=>{const id=uid();A['atmo:'+id]=f;C.atmosfere.push({id,nome:f.name.replace(/\.[^.]+$/,''),mime:f.type||'audio/mpeg'});});prepDirty();renderAtmo();};
 $('#pNew').onclick=()=>{if(unsaved&&!confirm('Ci sono modifiche non salvate. Ricominciare?'))return;C={v:1,nome:'',pg:[],mappe:[],libreria:[]};for(const k in A)delete A[k];for(const k in MS)delete MS[k];
   fileHandle=null;prepSel=null;cur=null;unsaved=false;$('#pFile').dataset.n='';$('#pFile').textContent='Nuovo pacchetto';renderPrep();dirty=true;};
 addEventListener('keydown',e=>{if(ROLE==='prep'&&(e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();savePack(false);}});
@@ -766,7 +785,7 @@ async function pushTo(c){
     if(img)c.send({t:'asset',map:id,k:'img',mime:img.type,buf:await img.arrayBuffer()});
     if(c.role==='tavolo'&&a.video)c.send({t:'asset',map:id,k:'video',mime:a.video.type,buf:await a.video.arrayBuffer()});
     if(c.role==='tavolo'&&a.audio)c.send({t:'asset',map:id,k:'audio',mime:a.audio.type,buf:await a.audio.arrayBuffer()});}
-  if(c.role==='tavolo')c.send({t:'vol',on:audioDM});
+  if(c.role==='tavolo'){c.send({t:'vol',on:audioDM});sendAtmo(c);}
   c.send({t:'gridv',on:gridV[c.role]});
   c.send(stateOf(s));c.send({t:'show',map:id});c.cur=id;
 }
@@ -781,6 +800,13 @@ const gridV={dm:null,tavolo:null,pg:null};let gridOv=null;
 function gridEff(role){const v=gridV[role];if(v!==null)return v;return true;}
 function sendGrid(role){conns.forEach(c=>{if(c.role===role){try{c.send({t:'gridv',on:gridV[role]});}catch(e){}}});}
 function renderGridSheet(){$('#gDm').checked=gridEff('dm');$('#gTav').checked=gridEff('tavolo');$('#gPg').checked=gridEff('pg');}
+let atmoSel=null;const ATMO={};   // null = audio della mappa · 'off' = silenzio · id = atmosfera
+async function sendAtmo(c){try{if(atmoSel&&atmoSel!=='off'&&!c.sent.has('atmo:'+atmoSel)){const b=A['atmo:'+atmoSel];if(b){c.sent.add('atmo:'+atmoSel);c.send({t:'atmoA',id:atmoSel,mime:b.type||'audio/mpeg',buf:await b.arrayBuffer()});}}
+  c.send({t:'atmo',id:atmoSel});}catch(e){}}
+function setAtmo(sel,lab){atmoSel=sel;const n=conns.filter(c=>c.role==='tavolo');n.forEach(sendAtmo);renderAtmoSheet();toast(n.length?lab+' ▶ tavolo':'Nessun tavolo collegato');}
+function renderAtmoSheet(){const L=$('#atmoSheet');L.innerHTML='';
+  [[null,'🗺️','Audio della mappa']].concat((C.atmosfere||[]).map(a=>[a.id,'🎶',a.nome])).concat([['off','🔇','Silenzio']]).forEach(([id,ic,lab])=>{
+    const b=document.createElement('button');if(atmoSel===id)b.className='on';b.innerHTML=`<span style="font-size:28px">${ic}</span><span>${esc(lab)}</span>`;b.onclick=()=>setAtmo(id,lab);L.appendChild(b);});}
 function setAudioDM(on){audioDM=on;$('#dAud').textContent=on?'🔊':'🔇';conns.forEach(c=>{if(c.role==='tavolo'){try{c.send({t:'vol',on});}catch(e){}}});toast(on?'Audio del tavolo acceso':'Audio del tavolo spento');}
 function bcast(mapId,msg){conns.forEach(c=>{if(c.cur===mapId){try{c.send(msg);}catch(e){}}});}
 function hostMove(mapId,id,x,y,who,c){
@@ -818,6 +844,7 @@ function enterDM(file){
     .catch(err=>{overlay('Pacchetto non valido: '+err.message);});
 }
 $('#dAud').onclick=()=>setAudioDM(!audioDM);
+$('#dAtmo').onclick=()=>{renderAtmoSheet();sheet('#shAtmo');};
 const SFXL=[['guarigione','✨','Guarigione / benedizione'],['esplosione','💥','Esplosione'],['tuono','⚡','Fulmine / tuono'],['spada','⚔️','Colpo di spada'],['ruggito','🐉','Ruggito']];
 $('#dSfx').onclick=()=>{const L=$('#sfxList');L.innerHTML='';SFXL.forEach(([k,ic,lab])=>{const b=document.createElement('button');b.innerHTML=`<span style="font-size:28px">${ic}</span><span>${lab}</span>`;
   b.onclick=()=>{const n=conns.filter(c=>c.role==='tavolo');n.forEach(c=>{try{c.send({t:'sfx',k});}catch(e){}});toast(n.length?lab+' ▶ tavolo':'Nessun tavolo collegato');};L.appendChild(b);});sheet('#shSfx');};
@@ -868,6 +895,8 @@ function clientData(d){
   if(d.t==='camp'){C.nome=d.nome;C.pg=d.pg;C.libreria=d.libreria||[];if(ROLE==='pg')choosePG();dirty=true;return;}
   if(d.t==='idle'){cur=null;dirty=true;return;}
   if(d.t==='vol'){audioOn=d.on;applyAudio();return;}
+  if(d.t==='atmoA'){const au=new Audio(URL.createObjectURL(new Blob([d.buf],{type:d.mime})));au.loop=true;ATMO[d.id]=au;applyAudio();return;}
+  if(d.t==='atmo'){atmoSel=d.id;applyAudio();return;}
   if(d.t==='gridv'){gridOv=d.on;dirty=true;return;}
   if(d.t==='sfx'){if(ROLE==='tavolo')playSfx(d.k);return;}
   if(d.t==='map'){const old=getMap(d.m.id);if(old&&old.rev!==d.m.rev){resetMS(d.m.id);C.mappe=C.mappe.filter(x=>x.id!==d.m.id);}
@@ -894,9 +923,11 @@ function clientData(d){
 let audioOn=true,audioOk=false;
 function hasSound(s){return !!(s&&(s.audio||(s.video&&(s.video.mozHasAudio||s.video.webkitAudioDecodedByteCount>0||(s.video.audioTracks&&s.video.audioTracks.length)))));}
 function applyAudio(){
-  if(ROLE!=='tavolo')return;const s=cur&&MS[cur];
-  Object.values(MS).forEach(x=>{if(x!==s&&x.audio)x.audio.pause();});
-  if(!s)return;const play=audioOn&&audioOk;
+  if(ROLE!=='tavolo')return;const s=cur&&MS[cur];const play=audioOn&&audioOk,ov=atmoSel;
+  Object.entries(ATMO).forEach(([k,a])=>{if(k===ov&&play)a.play().catch(()=>{});else a.pause();});
+  Object.values(MS).forEach(x=>{if((x!==s||ov)&&x.audio)x.audio.pause();});
+  if(ov){if(s&&s.video)s.video.muted=true;show('#audioHint',!audioOk&&audioOn&&ov!=='off');return;}
+  if(!s)return;
   if(s.audio){if(s.video)s.video.muted=true;if(play)s.audio.play().catch(()=>{});else s.audio.pause();}
   else if(s.video){s.video.muted=!play;}
   show('#audioHint',!audioOk&&audioOn&&hasSound(s));
