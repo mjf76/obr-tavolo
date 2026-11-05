@@ -182,6 +182,7 @@ body.prep #stage{left:420px}
   <button id="dMaps" class="pri">Mappe</button>
   <button id="dTok">+ Token</button>
   <button id="dParty">Party qui</button>
+  <button id="dRiv" title="Rende visibili ai giocatori tutti i token nascosti di questa mappa">Rivela tutti</button>
   <button id="dFit">Adatta</button>
   <button id="dCodes">Codici</button>
   <button id="dAud" title="Audio del tavolo">🔊</button>
@@ -418,7 +419,8 @@ function drawTok(s,t,ghost){
   ctx.globalAlpha=ghost?0.55:1;
   ctx.save();ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.fillStyle=p.colore;ctx.fill();
   if(im){ctx.clip();ctx.drawImage(im,t.x-r,t.y-r,2*r,2*r);}ctx.restore();
-  ctx.lineWidth=0.08;ctx.strokeStyle=(t.kind==='pg'&&t.pg===myPG)?'#ffd84a':(t.kind==='pg'?'#fff':p.colore);ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
+  ctx.lineWidth=t.kind==='pg'?0.11:0.08;ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
+  if(t.kind==='pg'&&t.pg===myPG){ctx.lineWidth=0.05;ctx.strokeStyle='#ffd84a';ctx.beginPath();ctx.arc(t.x,t.y,r+0.08,0,7);ctx.stroke();}
   if(t.hidden){ctx.setLineDash([0.12,0.1]);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(t.x,t.y,r+0.08,0,7);ctx.stroke();ctx.setLineDash([]);}
   if(!im){ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 '+(r*0.8)+'px system-ui';
     const w=String(p.nome).trim().split(/\s+/);ctx.fillText((w.length>1?w[0][0]+w[1][0]:String(p.nome).slice(0,2)).toUpperCase(),t.x,t.y+0.02);}
@@ -834,6 +836,7 @@ $('#dTok').onclick=()=>{const L=$('#dtLib');L.innerHTML='';
   show(L,(C.libreria||[]).length>0);sheet('#shTok');};
 $('#dFit').onclick=fit;
 $('#dReset').onclick=()=>{const s=cur&&MS[cur];if(!s)return;if(!confirm('Azzerare le zone esplorate?'))return;resetFog(s);bcast(s.id,{t:'resetfog',map:s.id});};
+$('#dRiv').onclick=()=>{const s=cur&&MS[cur];if(!s)return;let n=0;s.tokens.forEach(t=>{if(t.hidden){t.hidden=false;n++;}});if(n)hostTokens(s.id);toast(n?n+' token rivelati':'Nessun token nascosto');};
 $('#dParty').onclick=()=>{const s=cur&&MS[cur];if(!s)return;const[cx,cy]=viewCenter(s);const n=placeParty(s,cx,cy);hostTokens(s.id);toast(n?n+' PG posizionati':'I PG sono già qui');};
 $('#dtAdd').onclick=()=>{const s=cur&&MS[cur];if(!s)return;const sz=+$('#dtTag').value;const[cx,cy]=viewCenter(s);const[x,y]=freeSpot(s,cx,cy,sz);
   s.tokens.push({id:uid(),kind:'npc',nome:numera(s,$('#dtNome').value.trim()||'Mostro'),colore:$('#dtCol').value,taglia:sz,hidden:$('#dtHid').checked,x,y});
