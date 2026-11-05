@@ -48,6 +48,7 @@ body.prep #stage{left:420px}
 .sheet .x{position:absolute;right:12px;top:10px}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #2a2a2a}
 .mrow.on{color:var(--acc)}
+.vrow{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 10px}.vrow button.on{background:var(--acc);color:#000}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g2 label{font-size:12px;color:var(--mut);display:block;margin-bottom:2px}
 .g2 input,.g2 select{width:100%}
@@ -230,7 +231,10 @@ const PREFIX='tavolovtt-mjf76-';
 const FR=12;
 let ROLE=null;
 let C={v:1,nome:'',pg:[],mappe:[]};
-const A={};            // asset locali: A[id]={full,light,video} (Blob)
+const A={};            // asset locali: A[id]={full,light,video} (Blob); versioni: A[id+'~'+vid]
+/* versioni di una mappa: stesso id (token, fog, muri, porte), sfondo diverso */
+function verKey(m){return m&&m.ver&&(m.versioni||[]).some(v=>v.id===m.ver)?m.id+'~'+m.ver:(m?m.id:'');}
+function AA(id){const m=getMap(id);const k=verKey(m);const a=A[k]||{};if(k===id)return a;const b=A[id]||{};return{full:a.full,light:a.light,video:a.video,audio:a.audio||b.audio};}
 const MS={};           // stato runtime per mappa
 let cur=null, dirty=true, myPG=null, playerZoom=13, pending=null;
 let cam={s:30,x:0,y:0};
@@ -692,7 +696,8 @@ async function buildZip(){
   const z=new JSZip();const out=clone(C);
   out.mappe.forEach(m=>{delete m.ratio;});
   z.file('campagna.json',JSON.stringify(out));
-  for(const m of C.mappe){const a=A[m.id]||{};for(const k of ['full','light','video','audio'])if(a[k])z.file(`mappe/${m.id}/${k}`,a[k]);}
+  for(const m of C.mappe){const a=A[m.id]||{};for(const k of ['full','light','video','audio'])if(a[k])z.file(`mappe/${m.id}/${k}`,a[k]);
+    for(const v of m.versioni||[]){const b=A[m.id+'~'+v.id]||{};for(const k of ['full','light','video','audio'])if(b[k])z.file(`mappe/${m.id}/v/${v.id}/${k}`,b[k]);}}
   return z.generateAsync({type:'blob',compression:'STORE'});
 }
 async function readZip(file,onlyRoles){
@@ -701,7 +706,9 @@ async function readZip(file,onlyRoles){
   if(!cj){const nomi=Object.keys(z.files).slice(0,4).join(', ');throw new Error(`"${file.name}" (${mb(file)}) non è un pacchetto Tavolo VTT. Contiene: ${nomi||'niente'}`);}
   const j=JSON.parse(await cj.async('string'));
   for(const m of j.mappe){A[m.id]={};for(const k of ['full','light','video','audio']){const f=z.file(`${pre}mappe/${m.id}/${k}`);
-    if(f)A[m.id][k]=new Blob([await f.async('arraybuffer')],{type:(m.mime&&m.mime[k])||''});}}
+    if(f)A[m.id][k]=new Blob([await f.async('arraybuffer')],{type:(m.mime&&m.mime[k])||''});}
+    for(const v of m.versioni||[]){const key=m.id+'~'+v.id;A[key]={};for(const k of ['full','light','video','audio']){const f=z.file(`${pre}mappe/${m.id}/v/${v.id}/${k}`);
+      if(f)A[key][k]=new Blob([await f.async('arraybuffer')],{type:(v.mime&&v.mime[k])||''});}}}
   return j;
 }
 const fname=()=>((C.nome||'campagna').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')||'campagna')+'.tavolo.zip';
@@ -752,8 +759,8 @@ function metaOf(m){return{id:m.id,nome:m.nome,w:m.w,h:m.h,gridType:gt(m),ppg:m.p
 function stateOf(s){return{t:'state',map:s.id,tokens:s.tokens,doors:s.doors,exp:expURL(s)};}
 async function pushTo(c){
   const id=active[c.role];if(!id){c.send({t:'idle'});return;}
-  const m=getMap(id),s=ms(id),a=A[id]||{};const key=id+':'+m.rev;
-  if(!c.sent.has(key)){c.sent.add(key);c.send({t:'map',m:metaOf(m)});
+  const m=getMap(id),s=ms(id),a=AA(id);const key=id+':'+m.rev+':'+(m.ver||'');
+  if(!c.sent.has(key)){c.sent.add(key);c.send({t:'map',m:metaOf(m)});c.send({t:'ver',map:id,video:c.role==='tavolo'&&!!a.video});
     const img=c.role==='tavolo'?(a.full||a.light):(a.light||a.full);
     if(img)c.send({t:'asset',map:id,k:'img',mime:img.type,buf:await img.arrayBuffer()});
     if(c.role==='tavolo'&&a.video)c.send({t:'asset',map:id,k:'video',mime:a.video.type,buf:await a.video.arrayBuffer()});
@@ -784,7 +791,7 @@ function hostDoor(mapId,i){const s=ms(mapId);s.doors[i]=!s.doors[i];recompute(s)
 function hostTokens(mapId){const s=ms(mapId);recompute(s);bcast(mapId,{t:'tokens',map:mapId,tokens:s.tokens});dirty=true;}
 function activate(id){
   const m=getMap(id);const s=ms(id);cur=id;
-  if(!s.img){const a=A[id]||{};const b=a.light||a.full;if(b)imgFromBlob(b).then(im=>{s.img=im;dirty=true;});}
+  if(!s.img){const a=AA(id);const b=a.light||a.full;if(b)imgFromBlob(b).then(im=>{s.img=im;dirty=true;});}
   recompute(s);fit();
   if(m.ruoli.tavolo)active.tavolo=id;if(m.ruoli.pg)active.pg=id;
   conns.forEach(c=>{if(active[c.role]===id&&c.cur!==id)pushTo(c);});
@@ -794,7 +801,14 @@ function renderMaps(){const L=$('#mapsList');L.innerHTML='';
   C.mappe.forEach(m=>{const r=document.createElement('div');r.className='mrow'+(m.id===cur?' on':'');
     const where=[active.tavolo===m.id?'TV':'',active.pg===m.id?'PG':''].filter(Boolean).join(' + ');
     r.innerHTML=`<span>${esc(m.nome)}<br><small style="color:var(--mut)">${m.ruoli.tavolo?'TV ':''}${m.ruoli.pg?'PG ':''}${!m.ruoli.tavolo&&!m.ruoli.pg?'solo DM':''}${A[m.id]&&A[m.id].video?' · animata':''}</small></span><span style="font-size:12px">${where?'in onda: '+where:''}</span>`;
-    r.onclick=()=>{activate(m.id);show('#shMaps',false);};L.appendChild(r);});}
+    r.onclick=()=>{activate(m.id);show('#shMaps',false);};L.appendChild(r);
+    if((m.versioni||[]).length&&m.id===cur){const v=document.createElement('div');v.className='vrow';
+      [{id:'',nome:m.verNome||'Base'}].concat(m.versioni).forEach(x=>{const b=document.createElement('button');b.className='sm'+((m.ver||'')===x.id?' on':'');b.textContent=x.nome;
+        b.onclick=e=>{e.stopPropagation();setVer(m.id,x.id);};v.appendChild(b);});L.appendChild(v);}});}
+function setVer(id,vid){const m=getMap(id),s=ms(id);if(!m||(m.ver||'')===vid)return;m.ver=vid;
+  s.img=null;const a=AA(id);const b=a.light||a.full;if(b)imgFromBlob(b).then(im=>{s.img=im;dirty=true;});
+  conns.forEach(c=>{if(c.cur===id)pushTo(c);});renderMaps();
+  toast('Versione: '+((m.versioni||[]).find(v=>v.id===vid)||{nome:m.verNome||'Base'}).nome);dirty=true;}
 function enterDM(file){
   ROLE='dm';show('#start',false);show('#stage',true);show('#hud',true);show('#bar',true);
   resize();requestAnimationFrame(draw);wake();
@@ -857,6 +871,7 @@ function clientData(d){
   if(d.t==='map'){const old=getMap(d.m.id);if(old&&old.rev!==d.m.rev){resetMS(d.m.id);C.mappe=C.mappe.filter(x=>x.id!==d.m.id);}
     if(!getMap(d.m.id))C.mappe.push(d.m);ms(d.m.id);overlay('Carico la mappa…');return;}
   const s=d.map&&ms(d.map);if(!s)return;
+  if(d.t==='ver'){if(s.video){s.video.pause();s.video=null;}if(s.audio){s.audio.pause();s.audio=null;}dirty=true;return;}
   if(d.t==='asset'){const u=URL.createObjectURL(new Blob([d.buf],{type:d.mime}));
     if(d.k==='img'){const im=new Image();im.onload=()=>{s.img=im;dirty=true;};im.src=u;}
     else if(d.k==='audio'){const au=new Audio(u);au.loop=true;s.audio=au;if(cur===s.id)applyAudio();}
