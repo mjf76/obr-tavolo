@@ -389,7 +389,7 @@ function draw(){
     if(s.m.pxW)ctx.drawImage(bg,-ox,-oy,s.m.pxW/k,s.m.pxH/k);else ctx.drawImage(bg,0,0,W,H);}
   else{ctx.fillStyle='#222';ctx.fillRect(0,0,W,H);}
   const gv=ROLE==='dm'?gridV.dm:gridOv;
-  if(ROLE==='prep'||(gv!==null&&gv!==undefined?gv:!!s.m.grid))drawGrid(s,ROLE==='prep');
+  if(ROLE==='prep'||(gv!==null&&gv!==undefined?gv:true))drawGrid(s,ROLE==='prep');
   ctx.restore();
   if(ROLE==='prep'&&s.m.fog){ctx.strokeStyle='#29d3ff';ctx.lineWidth=0.08;ctx.beginPath();(s.m.walls||[]).forEach(g=>{ctx.moveTo(g[0],g[1]);ctx.lineTo(g[2],g[3]);});ctx.stroke();}
   if(s.m.fog&&ROLE!=='prep'&&s.fog){ctx.globalAlpha=ROLE==='dm'?0.55:1;ctx.drawImage(s.fog.comp,0,0,W,H);ctx.globalAlpha=1;}
@@ -419,8 +419,7 @@ function drawTok(s,t,ghost){
   ctx.globalAlpha=ghost?0.55:1;
   ctx.save();ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.fillStyle=p.colore;ctx.fill();
   if(im){ctx.clip();ctx.drawImage(im,t.x-r,t.y-r,2*r,2*r);}ctx.restore();
-  ctx.lineWidth=t.kind==='pg'?0.11:0.08;ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
-  if(t.kind==='pg'&&t.pg===myPG){ctx.lineWidth=0.05;ctx.strokeStyle='#ffd84a';ctx.beginPath();ctx.arc(t.x,t.y,r+0.08,0,7);ctx.stroke();}
+  ctx.lineWidth=t.kind==='pg'?0.14:0.08;ctx.strokeStyle=p.colore;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.stroke();
   if(t.hidden){ctx.setLineDash([0.12,0.1]);ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(t.x,t.y,r+0.08,0,7);ctx.stroke();ctx.setLineDash([]);}
   if(!im){ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 '+(r*0.8)+'px system-ui';
     const w=String(p.nome).trim().split(/\s+/);ctx.fillText((w.length>1?w[0][0]+w[1][0]:String(p.nome).slice(0,2)).toUpperCase(),t.x,t.y+0.02);}
@@ -779,7 +778,7 @@ function hostData(c,d){
 }
 let audioDM=true;
 const gridV={dm:null,tavolo:null,pg:null};let gridOv=null;
-function gridEff(role){const v=gridV[role];if(v!==null)return v;const m=getMap(role==='dm'?cur:active[role]);return !!(m&&m.grid);}
+function gridEff(role){const v=gridV[role];if(v!==null)return v;return true;}
 function sendGrid(role){conns.forEach(c=>{if(c.role===role){try{c.send({t:'gridv',on:gridV[role]});}catch(e){}}});}
 function renderGridSheet(){$('#gDm').checked=gridEff('dm');$('#gTav').checked=gridEff('tavolo');$('#gPg').checked=gridEff('pg');}
 function setAudioDM(on){audioDM=on;$('#dAud').textContent=on?'🔊':'🔇';conns.forEach(c=>{if(c.role==='tavolo'){try{c.send({t:'vol',on});}catch(e){}}});toast(on?'Audio del tavolo acceso':'Audio del tavolo spento');}
